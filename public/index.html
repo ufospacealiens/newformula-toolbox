@@ -26,7 +26,7 @@
 </defs></svg>
 
 <header class="top" id="top">
-  <a class="brand" href="#" id="home" aria-label="新配方的工具箱，回到第一個工具">
+  <a class="brand" href="#" id="home" aria-label="新配方的工具箱，回到首頁">
     <svg class="logo" viewBox="0 0 120 104" aria-hidden="true">
       <rect x="4" y="23" width="112" height="77" rx="13" fill="#25231F"/>
       <rect x="8" y="46" width="104" height="50" rx="9" fill="#FFFDF6"/>
@@ -48,6 +48,20 @@
 <main class="bench">
   <h1 class="sr">新配方的工具箱</h1>
   <section class="rack" id="rack" aria-label="工具欄位"></section>
+  <!-- 介紹：沒有選工具時顯示。改文字直接改這一段；每個 nm 是一句，只在句子之間換行 -->
+  <section class="intro" id="intro" aria-labelledby="intro-title">
+    <svg class="intro-art" viewBox="0 0 77 20" role="img" aria-label="一個人加上 AI，等於一個團隊" shape-rendering="crispEdges"><path class="bob" d="M8 4h5v1h-5zM7 5h7v1h-7zM7 6h2v1h-2zM12 6h2v1h-2zM7 7h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM13 7h1v1h-1zM7 8h1v1h-1zM13 8h1v1h-1zM8 9h5v1h-5zM7 10h7v1h-7zM6 11h1v1h-1zM8 11h5v1h-5zM14 11h1v1h-1zM6 12h1v1h-1zM8 12h5v1h-5zM14 12h1v1h-1zM8 13h5v1h-5zM8 14h2v1h-2zM11 14h2v1h-2zM7 15h3v1h-3zM11 15h3v1h-3z"/><path d="M21 8h1v1h-1zM21 9h1v1h-1zM19 10h5v1h-5zM21 11h1v1h-1zM21 12h1v1h-1zM41 9h5v1h-5zM41 11h5v1h-5zM49 7h5v1h-5zM55 7h5v1h-5zM61 7h5v1h-5zM67 7h1v1h-1zM71 7h1v1h-1zM51 8h1v1h-1zM55 8h1v1h-1zM61 8h1v1h-1zM65 8h1v1h-1zM67 8h2v1h-2zM70 8h2v1h-2zM51 9h1v1h-1zM55 9h1v1h-1zM61 9h1v1h-1zM65 9h1v1h-1zM67 9h1v1h-1zM69 9h1v1h-1zM71 9h1v1h-1zM51 10h1v1h-1zM55 10h4v1h-4zM61 10h5v1h-5zM67 10h1v1h-1zM71 10h1v1h-1zM51 11h1v1h-1zM55 11h1v1h-1zM61 11h1v1h-1zM65 11h1v1h-1zM67 11h1v1h-1zM71 11h1v1h-1zM51 12h1v1h-1zM55 12h1v1h-1zM61 12h1v1h-1zM65 12h1v1h-1zM67 12h1v1h-1zM71 12h1v1h-1zM51 13h1v1h-1zM55 13h5v1h-5zM61 13h1v1h-1zM65 13h1v1h-1zM67 13h1v1h-1zM71 13h1v1h-1z"/><path class="bob bob-2" d="M32 4h1v1h-1zM32 5h1v1h-1zM29 6h7v1h-7zM29 7h1v1h-1zM35 7h1v1h-1zM28 8h2v1h-2zM31 8h1v1h-1zM33 8h1v1h-1zM35 8h2v1h-2zM29 9h1v1h-1zM35 9h1v1h-1zM29 10h7v1h-7zM30 11h5v1h-5zM28 12h9v1h-9zM28 13h1v1h-1zM30 13h5v1h-5zM36 13h1v1h-1zM30 14h2v1h-2zM33 14h2v1h-2zM29 15h3v1h-3zM33 15h3v1h-3z"/></svg>
+    <h2 id="intro-title">一個人，就是一整個團隊</h2>
+    <p><span class="nm">我只是一個平凡人。</span><span class="nm">AI 誕生後，</span><span class="nm">我學會用各種工具，</span><span class="nm">解決生活中的不便。</span></p>
+    <p><span class="nm">以前要做到這些，</span><span class="nm">得靠一個團隊；</span><span class="nm">現在有了 AI，一個人就夠了。</span></p>
+    <p>這個工具箱，會繼續裝進更多軟體。</p>
+    <div class="intro-note">
+      <h3>心得</h3>
+      <p><span class="nm">很感謝 AI，</span><span class="nm">讓平凡的我也能把想法做出來。</span><span class="nm">我也投資 AI 項目。</span></p>
+    </div>
+    <p class="intro-tip">點工具看說明，點空白處回到這裡</p>
+  </section>
+  <!-- /介紹 -->
   <div class="veil" id="veil" hidden></div>
   <aside class="panel" id="panel" aria-live="polite" aria-labelledby="p-name">
     <button class="close" id="close" type="button" aria-label="關閉">×</button>

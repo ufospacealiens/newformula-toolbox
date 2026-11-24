@@ -32,6 +32,12 @@ function ballSvg(symbol, color, className) {
   s.append(u);
   return s;
 }
+// 下載（橘紅）和網頁（藍）的差別：圖示、文字、顏色都不同
+const KIND = {
+  '下載': { key: 'download', tag: '下載', long: '下載到電腦', go: '下載最新版' },
+  '網頁': { key: 'web', tag: '網頁', long: '網頁直接用', go: '開啟網頁' },
+};
+const kindOf = (t) => KIND[t.type];
 const pad = (n) => String(n).padStart(2, '0');
 function isNew(date) {
   const age = (Date.now() - new Date(date + 'T00:00:00+08:00').getTime()) / 864e5;
@@ -70,13 +76,17 @@ function drawRack() {
   const rack = $('rack');
   rack.replaceChildren();
   tools.forEach((t, i) => {
-    const b = el('button', 'slot');
+    const kind = kindOf(t);
+    const b = el('button', 'slot kind-' + kind.key);
     b.type = 'button';
     b.id = 'slot-' + t.id;
     b.setAttribute('aria-pressed', 'false');
     b.append(el('span', 'slot-no', pad(i + 1)), ballSvg('ball', t.colorValue, 'slot-ball'));
     if (t.icon) { const img = el('img'); img.src = 'icons/' + t.icon; img.alt = ''; img.width = 72; img.height = 72; b.append(img); }
     b.append(el('span', 'slot-name', t.name));
+    const strip = el('span', 'slot-kind');
+    strip.append(ballSvg('k-' + kind.key), el('span', '', kind.tag));
+    b.append(strip);
     if (t.date && isNew(t.date)) b.append(el('span', 'slot-new', 'NEW'));
     b.onclick = () => select(i, true);
     b.onmouseenter = () => light(i, true);
@@ -109,7 +119,10 @@ function showPanel() {
   const t = tools[selected], panel = $('panel');
   $('p-icon').hidden = !t.icon;
   if (t.icon) $('p-icon').src = 'icons/' + t.icon;
-  $('p-type').textContent = t.type === '網頁' ? '網頁工具' : '下載工具';
+  const kind = kindOf(t);
+  panel.classList.toggle('kind-web', kind.key === 'web');
+  panel.classList.toggle('kind-download', kind.key === 'download');
+  $('p-type').replaceChildren(ballSvg('k-' + kind.key), el('span', '', kind.long));
   $('p-name').textContent = t.name;
   $('p-desc').textContent = t.desc || '';
   const spec = $('spec');
@@ -127,7 +140,7 @@ function showPanel() {
   const go = $('go');
   if (t.url) {
     go.href = t.url;
-    go.textContent = t.type === '網頁' ? '開啟工具' : '下載最新版';
+    go.replaceChildren(ballSvg('k-' + kind.key), el('span', '', kind.go));
     if (t.type === '網頁') { go.target = '_blank'; go.rel = 'noopener'; } else { go.removeAttribute('target'); go.rel = 'noopener'; }
   } else {
     go.removeAttribute('href');

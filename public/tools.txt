@@ -53,6 +53,6 @@
 系統：手機、電腦都能用
 顏色：綠
 圖示：stock.webp
-版本：1.9
-更新日期：2026-11-24
+版本：2.0
+更新日期：2026-11-25
 網址：https://stock-calculator-bew.pages.dev/

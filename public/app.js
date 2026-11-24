@@ -42,7 +42,7 @@ function ballSvg(symbol, color, className) {
 const touchOnly = window.matchMedia('(hover: none)');
 // PC 下載（橘紅）和網頁版（藍）的差別：圖示、文字、顏色都不同
 const KIND = {
-  '下載': { key: 'download', tag: 'PC 下載', long: 'PC 下載 for PC', go: '下載 PC 版' },
+  '下載': { key: 'download', tag: 'PC 下載', long: 'PC 版', go: '下載 PC 版' },
   '網頁': { key: 'web', tag: '網頁版', long: '網頁版', go: '開啟網頁版' },
 };
 const kindOf = (t) => KIND[t.type];

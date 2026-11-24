@@ -1,4 +1,11 @@
 /* 版面：上方是箱子的標誌和收納的螺帽球，下面左邊是工具格、右邊是說明牌；手機時說明牌從底部滑出。 */
+/*FONTS*/
+@font-face { font-family: 'NF Sans'; font-weight: 400; font-display: swap; src: url(fonts/sans-400.dc161160.woff2) format('woff2'); }
+@font-face { font-family: 'NF Sans'; font-weight: 500; font-display: swap; src: url(fonts/sans-500.505d9ef4.woff2) format('woff2'); }
+@font-face { font-family: 'NF Sans'; font-weight: 900; font-display: swap; src: url(fonts/sans-900.12b8cb1e.woff2) format('woff2'); }
+@font-face { font-family: 'NF Mono'; font-weight: 500; font-display: swap; src: url(fonts/mono.49b98fba.woff2) format('woff2'); }
+@font-face { font-family: 'NF Pixel'; font-weight: 400; font-display: swap; src: url(fonts/pixel.4442e9ca.woff2) format('woff2'); }
+/*/FONTS*/
 :root {
   color-scheme: light;
   --shell: #E8E4DA;   /* 掌機外殼 */
@@ -13,9 +20,9 @@
   --blue-deep: #1F4468;
   --lcd: #B9C98C;
   --lcd-ink: #2B3A1C;
-  --sans: 'Noto Sans TC', 'Microsoft JhengHei UI', 'PingFang TC', sans-serif;
-  --mono: 'IBM Plex Mono', Consolas, monospace;
-  --pixel: 'Silkscreen', 'IBM Plex Mono', monospace;
+  --sans: 'NF Sans', 'Noto Sans TC', 'Microsoft JhengHei UI', 'PingFang TC', sans-serif;
+  --mono: 'NF Mono', Consolas, monospace;
+  --pixel: 'NF Pixel', 'NF Mono', monospace;
 }
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }

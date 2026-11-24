@@ -1,4 +1,5 @@
-import { parseTools, mergeTool, formatSize } from './tools-core.js';
+import { parseTools, mergeTool, formatSize } from './tools-core.js?v=752c2d59';
+import { ALL, HEAVY } from './font-chars.js?v=1091eecd';
 
 const $ = (id) => document.getElementById(id);
 const SVG = 'http://www.w3.org/2000/svg';
@@ -219,8 +220,24 @@ document.addEventListener('pointerup', (e) => {
   down = null;
 });
 
+// 字型檔只帶用到的字；出現新字（改文字、新版更新內容）時再向 Google Fonts 補齊
+const asked = new Set();
+function loadMissingFonts() {
+  const want = (text, have) => [...new Set(text)].filter((c) => c > '\u007f' && /\S/.test(c) && !have.includes(c));
+  const text = document.body.textContent + JSON.stringify(tools), heads = tools.map((t) => t.name).join('') + $('intro-title').textContent;
+  for (const [weights, chars] of [['400;500', want(text, ALL)], ['900', want(heads, HEAVY)]]) {
+    const fresh = chars.filter((c) => !asked.has(weights + c)).slice(0, 400);
+    if (!fresh.length) continue;
+    fresh.forEach((c) => asked.add(weights + c));
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@' + weights + '&display=swap&text=' + encodeURIComponent(fresh.join(''));
+    document.head.append(link);
+  }
+}
+
 async function getJson(path) {
-  try { const r = await fetch(path, { cache: 'no-cache' }); return r.ok ? await r.json() : {}; } catch { return {}; }
+  try { const r = await fetch(path); return r.ok ? await r.json() : {}; } catch { return {}; }
 }
 function redraw(keepId) {
   drawCount();
@@ -229,8 +246,10 @@ function redraw(keepId) {
   select(i, i >= 0); // 網址沒有指定工具時，先顯示介紹
 }
 async function start() {
+  // 三份資料同時讀，不用一個等一個
+  const releasesReady = getJson('releases.json'), liveReady = getJson('/api/live');
   try {
-    const res = await fetch('tools.txt', { cache: 'no-cache' });
+    const res = await fetch('tools.txt');
     if (!res.ok) throw new Error(String(res.status));
     tools = parseTools(await res.text());
     if (!tools.length) throw new Error('empty');
@@ -244,14 +263,16 @@ async function start() {
     return;
   }
   $('panel').hidden = false;
-  const releases = await getJson('releases.json');
+  const releases = await releasesReady;
   tools = tools.map((t) => mergeTool(t, t.release && releases[t.release]));
   redraw(location.hash.slice(1));
+  loadMissingFonts();
   // 軟體自己的線上更新清單最後讀，讀到才更新畫面
-  const live = await getJson('/api/live');
+  const live = await liveReady;
   if (Object.keys(live).length) {
     tools = tools.map((t) => mergeTool(t, live[t.id]));
     showPanel();
+    loadMissingFonts();
   }
 }
 start();

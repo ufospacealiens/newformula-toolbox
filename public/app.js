@@ -23,6 +23,13 @@ function el(tag, className, text) {
   if (text !== undefined) e.textContent = text;
   return e;
 }
+// 名稱有「 - 」時，固定在「-」前面換行，不會斷在字中間
+function setName(e, name) {
+  const i = name.indexOf(' - ');
+  if (i < 0) { e.textContent = name; return e; }
+  e.replaceChildren(el('span', 'nm', name.slice(0, i)), ' ', el('span', 'nm', name.slice(i + 1)));
+  return e;
+}
 function ballSvg(symbol, color, className) {
   const s = document.createElementNS(SVG, 'svg'), u = document.createElementNS(SVG, 'use');
   u.setAttribute('href', '#' + symbol);
@@ -84,7 +91,7 @@ function drawRack() {
     b.setAttribute('aria-pressed', 'false');
     b.append(el('span', 'slot-no', pad(i + 1)), ballSvg('ball', t.colorValue, 'slot-ball'));
     if (t.icon) { const img = el('img'); img.src = 'icons/' + t.icon; img.alt = ''; img.width = 72; img.height = 72; b.append(img); }
-    b.append(el('span', 'slot-name', t.name));
+    b.append(setName(el('span', 'slot-name'), t.name));
     const strip = el('span', 'slot-kind');
     strip.append(ballSvg('k-' + kind.key), el('span', '', kind.tag));
     b.append(strip);
@@ -124,7 +131,7 @@ function showPanel() {
   panel.classList.toggle('kind-web', kind.key === 'web');
   panel.classList.toggle('kind-download', kind.key === 'download');
   $('p-type').replaceChildren(ballSvg('k-' + kind.key), el('span', '', kind.long));
-  $('p-name').textContent = t.name;
+  setName($('p-name'), t.name);
   $('p-desc').textContent = t.desc || '';
   const spec = $('spec');
   spec.replaceChildren();

@@ -31,6 +31,7 @@
 
 ## 給 AI 助手
 
+- 有權限時，先讀私人儲存庫 `ufospacealiens/00-start-here`（所有專案的總覽和合作方式）。
 - 使用者用繁體中文溝通，非工程背景，請用白話說明。
 - 修改先開新分支給預覽網址看，使用者說「發布」才合併到 main。
 - 推送前執行 `node scripts/stamp.mjs` 和 `node test.mjs`，測試必須通過。

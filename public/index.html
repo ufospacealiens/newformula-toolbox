@@ -12,14 +12,14 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="site.webmanifest">
-<link rel="stylesheet" href="styles.css?v=841c08c9">
+<link rel="stylesheet" href="styles.css?v=72beae4e">
 <!-- 要用的東西一起下載，不用一個等一個 -->
 <!--FONTS-->
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/sans-400.dc161160.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/sans-500.505d9ef4.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/sans-900.12b8cb1e.woff2">
 <!--/FONTS-->
-<link rel="modulepreload" href="app.js?v=3243c641">
+<link rel="modulepreload" href="app.js?v=0d76677b">
 <link rel="modulepreload" href="tools-core.js?v=752c2d59">
 <link rel="modulepreload" href="font-chars.js?v=1091eecd">
 <link rel="preload" as="fetch" crossorigin href="tools.txt">
@@ -60,19 +60,21 @@
   <section class="rack" id="rack" aria-label="工具欄位"></section>
   <!-- 介紹：沒有選工具時顯示。改文字直接改這一段；一個 span 是一行，行尾不加標點 -->
   <section class="intro" id="intro" aria-labelledby="intro-title">
-    <svg class="intro-art" viewBox="0 0 77 20" role="img" aria-label="一個人加上 AI，等於一個團隊" shape-rendering="crispEdges"><path class="bob" d="M8 4h5v1h-5zM7 5h7v1h-7zM7 6h2v1h-2zM12 6h2v1h-2zM7 7h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM13 7h1v1h-1zM7 8h1v1h-1zM13 8h1v1h-1zM8 9h5v1h-5zM7 10h7v1h-7zM6 11h1v1h-1zM8 11h5v1h-5zM14 11h1v1h-1zM6 12h1v1h-1zM8 12h5v1h-5zM14 12h1v1h-1zM8 13h5v1h-5zM8 14h2v1h-2zM11 14h2v1h-2zM7 15h3v1h-3zM11 15h3v1h-3z"/><path d="M21 8h1v1h-1zM21 9h1v1h-1zM19 10h5v1h-5zM21 11h1v1h-1zM21 12h1v1h-1zM41 9h5v1h-5zM41 11h5v1h-5zM49 7h5v1h-5zM55 7h5v1h-5zM61 7h5v1h-5zM67 7h1v1h-1zM71 7h1v1h-1zM51 8h1v1h-1zM55 8h1v1h-1zM61 8h1v1h-1zM65 8h1v1h-1zM67 8h2v1h-2zM70 8h2v1h-2zM51 9h1v1h-1zM55 9h1v1h-1zM61 9h1v1h-1zM65 9h1v1h-1zM67 9h1v1h-1zM69 9h1v1h-1zM71 9h1v1h-1zM51 10h1v1h-1zM55 10h4v1h-4zM61 10h5v1h-5zM67 10h1v1h-1zM71 10h1v1h-1zM51 11h1v1h-1zM55 11h1v1h-1zM61 11h1v1h-1zM65 11h1v1h-1zM67 11h1v1h-1zM71 11h1v1h-1zM51 12h1v1h-1zM55 12h1v1h-1zM61 12h1v1h-1zM65 12h1v1h-1zM67 12h1v1h-1zM71 12h1v1h-1zM51 13h1v1h-1zM55 13h5v1h-5zM61 13h1v1h-1zM65 13h1v1h-1zM67 13h1v1h-1zM71 13h1v1h-1z"/><path class="bob bob-2" d="M32 4h1v1h-1zM32 5h1v1h-1zM29 6h7v1h-7zM29 7h1v1h-1zM35 7h1v1h-1zM28 8h2v1h-2zM31 8h1v1h-1zM33 8h1v1h-1zM35 8h2v1h-2zM29 9h1v1h-1zM35 9h1v1h-1zM29 10h7v1h-7zM30 11h5v1h-5zM28 12h9v1h-9zM28 13h1v1h-1zM30 13h5v1h-5zM36 13h1v1h-1zM30 14h2v1h-2zM33 14h2v1h-2zM29 15h3v1h-3zM33 15h3v1h-3z"/></svg>
+    <div class="intro-art" id="art" role="img" aria-label="一個人加上 AI，等於一個團隊"><svg viewBox="0 0 77 20" aria-hidden="true" shape-rendering="crispEdges"><path d="M21 8h1v1h-1zM21 9h1v1h-1zM19 10h5v1h-5zM21 11h1v1h-1zM21 12h1v1h-1zM41 9h5v1h-5zM41 11h5v1h-5zM49 7h5v1h-5zM55 7h5v1h-5zM61 7h5v1h-5zM67 7h1v1h-1zM71 7h1v1h-1zM51 8h1v1h-1zM55 8h1v1h-1zM61 8h1v1h-1zM65 8h1v1h-1zM67 8h2v1h-2zM70 8h2v1h-2zM51 9h1v1h-1zM55 9h1v1h-1zM61 9h1v1h-1zM65 9h1v1h-1zM67 9h1v1h-1zM69 9h1v1h-1zM71 9h1v1h-1zM51 10h1v1h-1zM55 10h4v1h-4zM61 10h5v1h-5zM67 10h1v1h-1zM71 10h1v1h-1zM51 11h1v1h-1zM55 11h1v1h-1zM61 11h1v1h-1zM65 11h1v1h-1zM67 11h1v1h-1zM71 11h1v1h-1zM51 12h1v1h-1zM55 12h1v1h-1zM61 12h1v1h-1zM65 12h1v1h-1zM67 12h1v1h-1zM71 12h1v1h-1zM51 13h1v1h-1zM55 13h5v1h-5zM61 13h1v1h-1zM65 13h1v1h-1zM67 13h1v1h-1zM71 13h1v1h-1z"/></svg><svg class="bob" viewBox="0 0 77 20" aria-hidden="true" shape-rendering="crispEdges"><path d="M8 4h5v1h-5zM7 5h7v1h-7zM7 6h2v1h-2zM12 6h2v1h-2zM7 7h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM13 7h1v1h-1zM7 8h1v1h-1zM13 8h1v1h-1zM8 9h5v1h-5zM7 10h7v1h-7zM6 11h1v1h-1zM8 11h5v1h-5zM14 11h1v1h-1zM6 12h1v1h-1zM8 12h5v1h-5zM14 12h1v1h-1zM8 13h5v1h-5zM8 14h2v1h-2zM11 14h2v1h-2zM7 15h3v1h-3zM11 15h3v1h-3z"/></svg><svg class="bob bob-2" viewBox="0 0 77 20" aria-hidden="true" shape-rendering="crispEdges"><path d="M32 4h1v1h-1zM32 5h1v1h-1zM29 6h7v1h-7zM29 7h1v1h-1zM35 7h1v1h-1zM28 8h2v1h-2zM31 8h1v1h-1zM33 8h1v1h-1zM35 8h2v1h-2zM29 9h1v1h-1zM35 9h1v1h-1zM29 10h7v1h-7zM30 11h5v1h-5zM28 12h9v1h-9zM28 13h1v1h-1zM30 13h5v1h-5zM36 13h1v1h-1zM30 14h2v1h-2zM33 14h2v1h-2zM29 15h3v1h-3zM33 15h3v1h-3z"/></svg></div>
     <h2 id="intro-title">一個人，就是一整個團隊</h2>
     <p><span>我只是一個平凡人</span><span>AI 誕生後，我學會用各種工具</span><span>解決生活中的不便</span></p>
     <p><span>以前要做到這些，得靠一個團隊</span><span>現在有了 AI，一個人就夠了</span></p>
     <p><span>這個工具箱，會繼續裝進更多軟體</span></p>
   </section>
   <!-- /介紹 -->
-  <div class="veil" id="veil" hidden></div>
+  <div class="veil" id="veil"></div>
   <aside class="panel" id="panel" aria-live="polite" aria-labelledby="p-name">
+    <span class="grab" aria-hidden="true"></span>
     <button class="close" id="close" type="button" aria-label="關閉">×</button>
     <div class="p-head"><img class="p-icon" id="p-icon" alt="" width="72" height="72"><div><p class="p-type" id="p-type"></p><h2 id="p-name"></h2></div></div>
     <p class="p-desc" id="p-desc"></p>
     <dl class="spec" id="spec"></dl>
+    <details class="notes" id="notes" hidden><summary>這一版更新了什麼</summary><ul id="notes-list"></ul></details>
     <p class="pc-note" id="pc-note" hidden>這是電腦（Windows）用的軟體，手機和平板不能安裝，請用電腦開啟這個網站下載。</p>
     <a class="go" id="go"></a>
   </aside>
@@ -81,6 +83,6 @@
 <footer class="foot"><a class="author" href="https://www.youtube.com/@%E6%96%B0%E9%85%8D%E6%96%B9" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="4.500" fill="#C93A10"/><path d="M10 8.500v7l6-3.500z" fill="#fff"/></svg><span>作者：<b>新配方</b></span><span class="sr">，開啟 YouTube 頻道</span></a><span class="grille" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></footer>
 <noscript><p class="foot">這個網站需要開啟 JavaScript 才能顯示工具。</p></noscript>
 <!--/PAGE-->
-<script type="module" src="app.js?v=3243c641"></script>
+<script type="module" src="app.js?v=0d76677b"></script>
 </body>
 </html>

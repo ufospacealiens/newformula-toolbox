@@ -4,7 +4,7 @@ const $ = (id) => document.getElementById(id);
 const SVG = 'http://www.w3.org/2000/svg';
 const phone = window.matchMedia('(max-width: 720px)');
 const MAX_BALLS = 8, MIN_SLOTS = 8, NEW_DAYS = 14;
-let tools = [], selected = 0, lastFocus = null;
+let tools = [], selected = -1, lastFocus = null; // selected 是 -1：沒有選工具，右邊顯示介紹
 
 // 標誌螢幕裡的像素扳手
 const WRENCH = ['......##..', '.....##...', '.....##..#', '.....##.##', '.....#####', '....#####.', '...####...', '..###.....', '.###......', '.##.......'];
@@ -42,7 +42,7 @@ function ballSvg(symbol, color, className) {
 const touchOnly = window.matchMedia('(hover: none)');
 // PC 下載（橘紅）和網頁版（藍）的差別：圖示、文字、顏色都不同
 const KIND = {
-  '下載': { key: 'download', tag: 'PC 下載', long: 'PC 下載 for PC', go: '下載 PC 版' },
+  '下載': { key: 'download', tag: 'PC 下載', long: 'PC 版', go: '下載 PC 版' },
   '網頁': { key: 'web', tag: '網頁版', long: '網頁版', go: '開啟網頁版' },
 };
 const kindOf = (t) => KIND[t.type];
@@ -124,6 +124,8 @@ function moveFocus(e, i) {
 }
 
 function showPanel() {
+  document.body.classList.toggle('has-tool', selected >= 0);
+  if (selected < 0) return;
   const t = tools[selected], panel = $('panel');
   $('p-icon').hidden = !t.icon;
   if (t.icon) $('p-icon').src = 'icons/' + t.icon;
@@ -167,15 +169,25 @@ function select(i, byUser) {
   [...$('rack').children].forEach((c, j) => { if (c.matches('.slot')) c.setAttribute('aria-pressed', String(j === i)); });
   showPanel();
   if (!byUser) return;
-  try { history.replaceState(null, '', '#' + tools[i].id); } catch { /* 預覽環境不支援時略過 */ }
+  setHash('#' + tools[i].id);
   if (phone.matches) openSheet();
+}
+
+// 不選任何工具，回到介紹
+function deselect() {
+  if (selected < 0) return;
+  select(-1, false);
+  setHash(location.pathname + location.search);
+}
+function setHash(url) {
+  try { history.replaceState(null, '', url); } catch { /* 預覽環境不支援時略過 */ }
 }
 
 function openSheet() {
   lastFocus = document.activeElement;
   document.body.classList.add('sheet-open');
   $('veil').hidden = false;
-  [$('top'), $('rack')].forEach((e) => { e.inert = true; });
+  [$('top'), $('rack'), $('intro')].forEach((e) => { e.inert = true; });
   $('panel').setAttribute('role', 'dialog');
   $('panel').setAttribute('aria-modal', 'true');
   $('panel').scrollTop = 0;
@@ -185,16 +197,27 @@ function closeSheet() {
   if (!document.body.classList.contains('sheet-open')) return;
   document.body.classList.remove('sheet-open');
   $('veil').hidden = true;
-  [$('top'), $('rack')].forEach((e) => { e.inert = false; });
+  [$('top'), $('rack'), $('intro')].forEach((e) => { e.inert = false; });
   $('panel').removeAttribute('role');
   $('panel').removeAttribute('aria-modal');
   lastFocus?.focus?.({ preventScroll: true });
+  deselect();
 }
 $('close').onclick = closeSheet;
 $('veil').onclick = closeSheet;
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
-phone.addEventListener('change', () => { closeSheet(); if (tools.length) showPanel(); });
-$('home').onclick = (e) => { e.preventDefault(); closeSheet(); if (tools.length) select(0, false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSheet(); deselect(); } });
+phone.addEventListener('change', () => { closeSheet(); if (phone.matches) deselect(); else showPanel(); });
+$('home').onclick = (e) => { e.preventDefault(); closeSheet(); deselect(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+// 點空白處取消選取；拖曳選字、捲動、點捲軸都不算
+let down = null;
+const isBlank = (e) => e.target instanceof Element && !e.target.closest('.slot, .panel, button, a, summary') && e.clientX < document.documentElement.clientWidth;
+document.addEventListener('pointerdown', (e) => { down = e.button === 0 && isBlank(e) ? { x: e.clientX, y: e.clientY } : null; });
+document.addEventListener('pointercancel', () => { down = null; });
+document.addEventListener('pointerup', (e) => {
+  if (down && !phone.matches && isBlank(e) && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 10) deselect();
+  down = null;
+});
 
 async function getJson(path) {
   try { const r = await fetch(path, { cache: 'no-cache' }); return r.ok ? await r.json() : {}; } catch { return {}; }
@@ -202,8 +225,8 @@ async function getJson(path) {
 function redraw(keepId) {
   drawCount();
   drawRack();
-  const i = Math.max(0, tools.findIndex((t) => t.id === keepId));
-  select(i, false);
+  const i = tools.findIndex((t) => t.id === keepId);
+  select(i, i >= 0); // 網址沒有指定工具時，先顯示介紹
 }
 async function start() {
   try {

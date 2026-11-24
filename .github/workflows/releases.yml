@@ -1,0 +1,35 @@
+# 在 GitHub「Releases」上傳新檔案後，自動把最新版寫進 public/releases.json，官網跟著更新。
+name: 更新下載檔
+
+on:
+  release:
+    types: [published, edited, deleted]
+  workflow_dispatch:
+
+concurrency:
+  group: releases
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: 讀取最新版
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api "repos/${{ github.repository }}/releases?per_page=100" | node scripts/build-releases.mjs
+      - run: node test.mjs
+      - name: 存檔
+        run: |
+          git diff --quiet -- public/releases.json && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "更新下載檔版本" -- public/releases.json
+          git push

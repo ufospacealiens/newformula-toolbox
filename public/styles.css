@@ -23,7 +23,7 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0 auto; max-width: 1180px; min-height: 100vh; min-height: 100dvh;
   display: flex; flex-direction: column;
-  padding-block: 28px 20px;
+  padding-block: calc(28px + env(safe-area-inset-top, 0px)) calc(20px + env(safe-area-inset-bottom, 0px));
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   background: var(--shell); color: var(--ink);
@@ -161,7 +161,7 @@ span.ball svg { transform: none !important; }
 }
 /* ---------- 手機：說明牌從底部滑出 ---------- */
 @media (max-width: 720px) {
-  body { padding-block: 18px 16px; }
+  body { padding-block: calc(18px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)); }
   .brand { gap: 12px; }
   .logo { width: 72px; }
   .brand-name { white-space: nowrap; font-size: clamp(20px, 6vw, 26px); }

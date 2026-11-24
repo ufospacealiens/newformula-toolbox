@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>新配方的工具箱</title>
+<meta name="description" content="新配方自己做的工具，都收在這裡。遊戲時光管理器、麥克風音量、GoFile 下載器、股票費用計算機。">
+<meta name="theme-color" content="#E8E4DA">
+<meta property="og:title" content="新配方的工具箱">
+<meta property="og:description" content="自己做的工具，都收在這裡">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Noto+Sans+TC:wght@400;500;900&family=Silkscreen&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!--PAGE-->
+<svg class="defs" aria-hidden="true"><defs>
+  <symbol id="ball" viewBox="0 0 44 44"><g transform="rotate(-14 22 22)"><circle cx="22" cy="22" r="20" fill="#25231F"/><circle cx="22" cy="22" r="17.5" fill="currentColor"/><path d="M4.500 22a17.500 17.500 0 0 0 35 0z" fill="#25231F" fill-opacity=".3"/><path d="M4.500 22h35" stroke="#F4F0E4" stroke-width="3.500"/><ellipse cx="14" cy="13" rx="4.500" ry="3.200" fill="#fff" transform="rotate(-38 14 13)"/><path d="M22 13.500l7.400 4.250v8.500L22 30.500l-7.400-4.250v-8.500z" fill="#F4F0E4" stroke="#25231F" stroke-width="2.500" stroke-linejoin="round"/><circle cx="22" cy="22" r="3.600" fill="#25231F"/></g></symbol>
+  <symbol id="k-download" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2.400"/><path d="M8 21h8M12 17v4M12 6v6.500m0 0l-2.800-2.800m2.800 2.800l2.800-2.800" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="k-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.500" fill="none" stroke="currentColor" stroke-width="2.400"/><path d="M2.500 12h19M12 2.500c3 2.700 4.200 5.800 4.200 9.500S15 18.800 12 21.500c-3-2.700-4.200-5.800-4.200-9.500S9 5.200 12 2.500z" fill="none" stroke="currentColor" stroke-width="2.200"/></symbol>
+  <symbol id="ball-empty" viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" fill="none" stroke="#A79F8D" stroke-width="2.500" stroke-dasharray="4 4"/></symbol>
+</defs></svg>
+
+<header class="top" id="top">
+  <a class="brand" href="#" id="home" aria-label="新配方的工具箱，回到第一個工具">
+    <svg class="logo" viewBox="0 0 120 104" aria-hidden="true">
+      <rect x="4" y="23" width="112" height="77" rx="13" fill="#25231F"/>
+      <rect x="8" y="46" width="104" height="50" rx="9" fill="#FFFDF6"/>
+      <rect x="8" y="46" width="104" height="12" fill="#FFFDF6"/>
+      <g class="inside"><rect x="20" y="31" width="10" height="13" rx="2" fill="#2F5D8C"/><rect x="40" y="27" width="12" height="17" rx="2" fill="#F2B632"/><rect x="66" y="30" width="10" height="14" rx="2" fill="#7E9A4C"/><rect x="88" y="33" width="12" height="11" rx="2" fill="#F4F0E4"/></g>
+      <rect x="8" y="44" width="104" height="5" fill="#25231F"/>
+      <rect x="41" y="55" width="38" height="37" rx="5" fill="#25231F"/>
+      <rect class="lcd" x="45" y="59" width="30" height="29" rx="2"/>
+      <g class="pix" id="wrench"></g>
+      <rect x="14" y="71" width="22" height="8" rx="2" fill="#25231F"/><rect x="21" y="64" width="8" height="22" rx="2" fill="#25231F"/>
+      <circle cx="88" cy="82" r="6" fill="#C93A10"/><circle cx="101" cy="70" r="6" fill="#2F5D8C"/>
+      <g class="lid"><rect x="39" y="6" width="42" height="30" rx="9" fill="none" stroke="#25231F" stroke-width="7"/><path d="M4 50V36a13 13 0 0 1 13-13h86a13 13 0 0 1 13 13v14z" fill="#25231F"/><path d="M8 46V36a9 9 0 0 1 9-9h86a9 9 0 0 1 9 9v10z" fill="#C93A10"/><rect x="21" y="41" width="11" height="14" rx="3" fill="#F2B632" stroke="#25231F" stroke-width="3"/><rect x="88" y="41" width="11" height="14" rx="3" fill="#F2B632" stroke="#25231F" stroke-width="3"/></g>
+    </svg>
+    <span class="brand-text"><span class="brand-name">新配方的<b>工具箱</b></span><span class="brand-sub">自己做的工具，都收在這裡</span></span>
+  </a>
+  <div class="count" id="count" role="img" aria-label="已收納的工具"><div class="balls" id="balls"></div><span class="num" id="num"></span></div>
+</header>
+
+<main class="bench">
+  <h1 class="sr">新配方的工具箱</h1>
+  <section class="rack" id="rack" aria-label="工具欄位"></section>
+  <div class="veil" id="veil" hidden></div>
+  <aside class="panel" id="panel" aria-live="polite" aria-labelledby="p-name">
+    <button class="close" id="close" type="button" aria-label="關閉">×</button>
+    <div class="p-head"><img class="p-icon" id="p-icon" alt="" width="72" height="72"><div><p class="p-type" id="p-type"></p><h2 id="p-name"></h2></div></div>
+    <p class="p-desc" id="p-desc"></p>
+    <dl class="spec" id="spec"></dl>
+    <details class="notes" id="notes" hidden><summary>這一版更新了什麼</summary><ul id="notes-list"></ul></details>
+    <p class="pc-note" id="pc-note" hidden>這是電腦（Windows）用的軟體，手機和平板不能安裝，請用電腦開啟這個網站下載。</p>
+    <a class="go" id="go"></a>
+  </aside>
+</main>
+
+<footer class="foot"><a class="author" href="https://www.youtube.com/@%E6%96%B0%E9%85%8D%E6%96%B9" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="4.500" fill="#C93A10"/><path d="M10 8.500v7l6-3.500z" fill="#fff"/></svg><span>作者：<b>新配方</b></span><span class="sr">，開啟 YouTube 頻道</span></a><span class="grille" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></footer>
+<noscript><p class="foot">這個網站需要開啟 JavaScript 才能顯示工具。</p></noscript>
+<!--/PAGE-->
+<script type="module" src="app.js"></script>
+</body>
+</html>

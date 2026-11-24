@@ -40,7 +40,7 @@ function ballSvg(symbol, color, className) {
   s.append(u);
   return s;
 }
-const touchOnly = window.matchMedia('(hover: none)');
+const touchOnly = window.matchMedia('(hover: none)'), calm = window.matchMedia('(prefers-reduced-motion: reduce)');
 // PC 下載（橘紅）和網頁版（藍）的差別：圖示、文字、顏色都不同
 const KIND = {
   '下載': { key: 'download', tag: 'PC 下載', long: 'PC 版', go: '下載 PC 版' },
@@ -91,7 +91,7 @@ function drawRack() {
     b.id = 'slot-' + t.id;
     b.setAttribute('aria-pressed', 'false');
     b.append(el('span', 'slot-no', pad(i + 1)), ballSvg('ball', t.colorValue, 'slot-ball'));
-    if (t.icon) { const img = el('img'); img.src = 'icons/' + t.icon; img.alt = ''; img.width = 72; img.height = 72; b.append(img); }
+    if (t.icon) { const img = el('img'); img.src = 'icons/' + t.icon; img.alt = ''; img.width = 72; img.height = 72; img.decoding = 'async'; b.append(img); }
     b.append(setName(el('span', 'slot-name'), t.name));
     const strip = el('span', 'slot-kind');
     strip.append(ballSvg('k-' + kind.key), el('span', '', kind.tag));
@@ -109,6 +109,7 @@ function drawRack() {
 
 // 滑鼠移到球或格子上，兩邊一起亮
 function light(i, on) {
+  if (touchOnly.matches) return; // 手機沒有滑鼠，點過不要留下黑框
   $('balls').children[i]?.classList.toggle('lit', on && tools.length <= MAX_BALLS);
   $('rack').children[i]?.classList.toggle('lit', on);
 }
@@ -126,8 +127,10 @@ function moveFocus(e, i) {
 
 function showPanel() {
   document.body.classList.toggle('has-tool', selected >= 0);
-  if (selected < 0) return;
-  const t = tools[selected], panel = $('panel');
+  if (selected >= 0) fillPanel(tools[selected]);
+}
+function fillPanel(t) {
+  const panel = $('panel');
   $('p-icon').hidden = !t.icon;
   if (t.icon) $('p-icon').src = 'icons/' + t.icon;
   const kind = kindOf(t);
@@ -144,6 +147,10 @@ function showPanel() {
     row.append(el('dt', '', k), el('dd', c, v));
     spec.append(row);
   });
+  const notes = t.notes || [];
+  $('notes').hidden = !notes.length;
+  $('notes').open = false;
+  $('notes-list').replaceChildren(...notes.map((n) => el('li', '', n)));
   const go = $('go');
   if (t.url) {
     go.href = t.url;
@@ -156,9 +163,8 @@ function showPanel() {
   }
   // 用手機或平板看 PC 軟體時，提醒不能安裝
   $('pc-note').hidden = !(kind.key === 'download' && (phone.matches || touchOnly.matches));
-  panel.classList.remove('swap');
-  void panel.offsetWidth;
-  panel.classList.add('swap');
+  // 電腦版換內容時淡入；手機由說明牌自己滑出
+  if (!phone.matches && !calm.matches) for (const e of [panel.querySelector('.p-head'), $('p-desc'), spec]) e.animate?.([{ transform: 'translateY(6px)', opacity: 0.2 }, { transform: 'none', opacity: 1 }], { duration: 220, easing: 'ease' });
 }
 
 function select(i, byUser) {
@@ -176,34 +182,87 @@ function deselect() {
   select(-1, false);
   setHash(location.pathname + location.search);
 }
+let hashTimer = 0;
 function setHash(url) {
-  try { history.replaceState(null, '', url); } catch { /* 預覽環境不支援時略過 */ }
+  // 手機等動畫結束再改網址，滑動比較順
+  clearTimeout(hashTimer);
+  const run = () => { try { history.replaceState(null, '', url); } catch { /* 預覽環境不支援時略過 */ } };
+  if (phone.matches) hashTimer = setTimeout(run, 400); else run();
 }
 
-function openSheet() {
+// 手機的說明牌：先把內容準備好（sheet-ready），下一格再滑出（sheet-open），動畫才不會卡
+const sheetPanel = $('panel'), veil = $('veil'), SLIDE = 320;
+const frame = () => new Promise((r) => requestAnimationFrame(r));
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+let sheetTurn = 0; // 每次開關加一，中途反悔時舊的動作就失效
+function lockPage(on) {
+  [$('top'), $('rack'), $('intro')].forEach((e) => { e.inert = on; });
+  sheetPanel.inert = phone.matches && !on; // 手機關著時先放在畫面外備好，但不能操作
+  if (on) { sheetPanel.setAttribute('role', 'dialog'); sheetPanel.setAttribute('aria-modal', 'true'); } else { sheetPanel.removeAttribute('role'); sheetPanel.removeAttribute('aria-modal'); }
+}
+async function openSheet() {
+  const turn = ++sheetTurn;
   lastFocus = document.activeElement;
+  document.body.classList.add('sheet-ready');
+  sheetPanel.scrollTop = 0;
+  lockPage(true);
+  await Promise.race([Promise.resolve($('p-icon').decode?.()).catch(() => {}), pause(80)]);
+  await frame();
+  await frame();
+  if (turn !== sheetTurn) return;
   document.body.classList.add('sheet-open');
-  $('veil').hidden = false;
-  [$('top'), $('rack'), $('intro')].forEach((e) => { e.inert = true; });
-  $('panel').setAttribute('role', 'dialog');
-  $('panel').setAttribute('aria-modal', 'true');
-  $('panel').scrollTop = 0;
-  $('close').focus({ preventScroll: true });
+  await pause(SLIDE);
+  if (turn === sheetTurn) $('close').focus({ preventScroll: true });
 }
 function closeSheet() {
-  if (!document.body.classList.contains('sheet-open')) return;
-  document.body.classList.remove('sheet-open');
-  $('veil').hidden = true;
-  [$('top'), $('rack'), $('intro')].forEach((e) => { e.inert = false; });
-  $('panel').removeAttribute('role');
-  $('panel').removeAttribute('aria-modal');
+  if (!document.body.classList.contains('sheet-ready')) return;
+  const turn = ++sheetTurn;
+  document.body.classList.remove('sheet-open', 'dragging');
+  sheetPanel.style.transform = '';
+  lockPage(false);
   lastFocus?.focus?.({ preventScroll: true });
   deselect();
+  setTimeout(() => { if (turn === sheetTurn) document.body.classList.remove('sheet-ready'); }, SLIDE);
 }
 $('close').onclick = closeSheet;
-$('veil').onclick = closeSheet;
+veil.onclick = closeSheet;
+
+// 往下拉關閉說明牌；打開時後面的畫面不跟著動
+let drag = null;
+sheetPanel.addEventListener('touchstart', (e) => {
+  const ok = phone.matches && e.touches.length === 1 && document.body.classList.contains('sheet-open') && !e.target.closest('.notes ul');
+  drag = ok ? { y: e.touches[0].clientY, dy: 0, lastY: e.touches[0].clientY, lastT: e.timeStamp, speed: 0, atTop: sheetPanel.scrollTop <= 0, scrolls: sheetPanel.scrollHeight > sheetPanel.clientHeight + 1, height: sheetPanel.clientHeight } : null;
+}, { passive: true });
+sheetPanel.addEventListener('touchmove', (e) => {
+  if (!drag) return;
+  const y = e.touches[0].clientY, dy = y - drag.y;
+  // 內容可以捲動時，往上滑或還沒捲到頂，交給一般捲動
+  if (!drag.on && drag.scrolls && (dy < 0 || !drag.atTop)) { drag = null; return; }
+  if (e.cancelable) e.preventDefault();
+  if (dy > 0 && e.timeStamp > drag.lastT) drag.speed = (y - drag.lastY) / (e.timeStamp - drag.lastT);
+  drag.lastY = y; drag.lastT = e.timeStamp; drag.dy = Math.max(0, dy);
+  if (!drag.on && drag.dy > 4) { drag.on = true; document.body.classList.add('dragging'); }
+  if (drag.on && !drag.raf) drag.raf = requestAnimationFrame(() => { if (drag) { drag.raf = 0; sheetPanel.style.transform = 'translateY(' + drag.dy + 'px)'; } });
+}, { passive: false });
+function endDrag(e) {
+  const d = drag;
+  drag = null;
+  if (!d?.on) return;
+  cancelAnimationFrame(d.raf);
+  const far = d.dy > Math.min(140, d.height * 0.3), flick = d.speed > 0.5 && d.dy > 30;
+  if (e.type === 'touchend' && (far || flick)) { closeSheet(); return; }
+  document.body.classList.remove('dragging');
+  sheetPanel.style.transform = '';
+}
+sheetPanel.addEventListener('touchend', endDrag);
+sheetPanel.addEventListener('touchcancel', endDrag);
+veil.addEventListener('touchmove', (e) => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+
+// 小人只在看得到的時候動
+if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => $('art').classList.toggle('still', e.intersectionRatio < 0.5), { threshold: [0, 0.5] }).observe($('art'));
+
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSheet(); deselect(); } });
-phone.addEventListener('change', () => { closeSheet(); if (phone.matches) deselect(); else showPanel(); });
+phone.addEventListener('change', () => { closeSheet(); if (phone.matches) deselect(); else showPanel(); lockPage(false); });
 $('home').onclick = (e) => { e.preventDefault(); closeSheet(); deselect(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
 // 點空白處取消選取；拖曳選字、捲動、點捲軸都不算
@@ -262,6 +321,9 @@ async function start() {
   const releases = await releasesReady;
   tools = tools.map((t) => mergeTool(t, t.release && releases[t.release]));
   redraw(location.hash.slice(1));
+  if (!document.body.classList.contains('sheet-ready')) lockPage(false);
+  // 手機先在背後準備好說明牌和字型，第一次點開才不會卡
+  if (phone.matches) setTimeout(() => { if (selected < 0) fillPanel(tools[0]); document.fonts?.load?.('500 16px "NF Mono"'); document.body.classList.add('sheet-warm'); }, 600);
   loadMissingFonts();
   // 軟體自己的線上更新清單最後讀，讀到才更新畫面
   const live = await liveReady;

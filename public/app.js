@@ -32,10 +32,11 @@ function ballSvg(symbol, color, className) {
   s.append(u);
   return s;
 }
-// 下載（橘紅）和網頁（藍）的差別：圖示、文字、顏色都不同
+const touchOnly = window.matchMedia('(hover: none)');
+// PC 下載（橘紅）和網頁版（藍）的差別：圖示、文字、顏色都不同
 const KIND = {
-  '下載': { key: 'download', tag: '下載', long: '下載到電腦', go: '下載最新版' },
-  '網頁': { key: 'web', tag: '網頁', long: '網頁直接用', go: '開啟網頁' },
+  '下載': { key: 'download', tag: 'PC 下載', long: 'PC 下載 for PC', go: '下載 PC 版' },
+  '網頁': { key: 'web', tag: '網頁版', long: '網頁版', go: '開啟網頁版' },
 };
 const kindOf = (t) => KIND[t.type];
 const pad = (n) => String(n).padStart(2, '0');
@@ -147,6 +148,8 @@ function showPanel() {
     go.removeAttribute('target');
     go.textContent = '還沒開放下載';
   }
+  // 用手機或平板看 PC 軟體時，提醒不能安裝
+  $('pc-note').hidden = !(kind.key === 'download' && (phone.matches || touchOnly.matches));
   panel.classList.remove('swap');
   void panel.offsetWidth;
   panel.classList.add('swap');
@@ -183,7 +186,7 @@ function closeSheet() {
 $('close').onclick = closeSheet;
 $('veil').onclick = closeSheet;
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
-phone.addEventListener('change', closeSheet);
+phone.addEventListener('change', () => { closeSheet(); if (tools.length) showPanel(); });
 $('home').onclick = (e) => { e.preventDefault(); closeSheet(); if (tools.length) select(0, false); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
 async function getJson(path) {

@@ -144,10 +144,6 @@ function showPanel() {
     row.append(el('dt', '', k), el('dd', c, v));
     spec.append(row);
   });
-  const notes = t.notes || [];
-  $('notes').hidden = !notes.length;
-  $('notes').open = false;
-  $('notes-list').replaceChildren(...notes.map((n) => el('li', '', n)));
   const go = $('go');
   if (t.url) {
     go.href = t.url;

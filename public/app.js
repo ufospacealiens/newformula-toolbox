@@ -147,10 +147,6 @@ function fillPanel(t) {
     row.append(el('dt', '', k), el('dd', c, v));
     spec.append(row);
   });
-  const notes = t.notes || [];
-  $('notes').hidden = !notes.length;
-  $('notes').open = false;
-  $('notes-list').replaceChildren(...notes.map((n) => el('li', '', n)));
   const go = $('go');
   if (t.url) {
     go.href = t.url;
@@ -230,7 +226,7 @@ veil.onclick = closeSheet;
 // 往下拉關閉說明牌；打開時後面的畫面不跟著動
 let drag = null;
 sheetPanel.addEventListener('touchstart', (e) => {
-  const ok = phone.matches && e.touches.length === 1 && document.body.classList.contains('sheet-open') && !e.target.closest('.notes ul');
+  const ok = phone.matches && e.touches.length === 1 && document.body.classList.contains('sheet-open');
   drag = ok ? { y: e.touches[0].clientY, dy: 0, lastY: e.touches[0].clientY, lastT: e.timeStamp, speed: 0, atTop: sheetPanel.scrollTop <= 0, scrolls: sheetPanel.scrollHeight > sheetPanel.clientHeight + 1, height: sheetPanel.clientHeight } : null;
 }, { passive: true });
 sheetPanel.addEventListener('touchmove', (e) => {

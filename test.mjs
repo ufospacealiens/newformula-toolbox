@@ -48,4 +48,6 @@ assert.deepEqual([ok['game-time'].version, ok['game-time'].url], ['7.0.0', host 
 assert.deepEqual(await run(async () => new Response('not json')), {});
 assert.deepEqual(await run(async () => new Response('', { status: 500 })), {});
 assert.deepEqual(await run(async () => { throw new Error('timeout'); }), {});
+// 說明牌不顯示更新內容（使用者決定），不要加回
+for (const f of ['index.html', 'app.js']) assert.doesNotMatch(fs.readFileSync(new URL('./public/' + f, import.meta.url), 'utf8'), /這一版更新了什麼|notes-list/, f);
 console.log('PASS 清單解析、手動編輯錯誤、線上更新清單、GitHub 發布、版本比較、來源故障');

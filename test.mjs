@@ -14,6 +14,14 @@ assert.equal(tools[0].source.startsWith('https://'), true);
 assert.equal(new Set(tools.map((t) => t.colorValue)).size, tools.length);
 for (const t of tools) assert.ok(fs.existsSync(new URL('./public/icons/' + t.icon, import.meta.url)), t.icon);
 
+// 遊戲區清單檢查
+const gamesText = fs.readFileSync(new URL('./public/games.txt', import.meta.url), 'utf8');
+const games = parseTools(gamesText);
+assert.deepEqual(games.map((g) => g.id), ['liar-dice']);
+assert.equal(games[0].type, '遊戲');
+assert.equal(games[0].url.startsWith('https://'), true);
+assert.ok(fs.existsSync(new URL('./public/icons/' + games[0].icon, import.meta.url)), games[0].icon);
+
 // 手動編輯容易發生的狀況
 const messy = parseTools('﻿# 說明\r\n代號: A-1\r\n名稱: 甲\r\n網址：javascript:alert(1)\r\n圖示：../x.png\r\n代號：b\r\n名稱：乙\r\n類型：網頁\r\n不認得：x\r\n\r\n代號：b\r\n名稱：重複\r\n\r\n代號：有中文\r\n名稱：壞代號\r\n\r\n名稱：沒有代號');
 assert.deepEqual(messy.map((t) => [t.id, t.type, t.url, t.icon]), [['a-1', '下載', '', ''], ['b', '網頁', '', '']]);

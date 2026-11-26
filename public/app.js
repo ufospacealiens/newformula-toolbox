@@ -1,12 +1,12 @@
-import { parseTools, mergeTool, formatSize, fileUrl } from './tools-core.js?v=6e530706';
-import { ALL, HEAVY } from './font-chars.js?v=1091eecd';
+import { parseTools, mergeTool, formatSize, fileUrl } from './tools-core.js?v=a0a8d81e';
+import { ALL, HEAVY } from './font-chars.js?v=e51e91bf';
 
 const $ = (id) => document.getElementById(id);
 const SVG = 'http://www.w3.org/2000/svg';
 const phone = window.matchMedia('(max-width: 720px)');
 const MAX_BALLS = 8, MIN_SLOTS = 8, NEW_DAYS = 14;
 let tools = [], selected = -1, lastFocus = null; // selected 是 -1：沒有選工具，右邊顯示介紹
-let pub = [], priv = []; // 公開的工具、輸入密碼後才有的私人軟體
+let pub = [], priv = [], games = [], mode = 'tools'; // 公開工具、私人軟體、遊戲區、目前分區
 
 // 標誌螢幕裡的像素扳手
 const WRENCH = ['......##..', '.....##...', '.....##..#', '.....##.##', '.....#####', '....#####.', '...####...', '..###.....', '.###......', '.##.......'];
@@ -42,10 +42,11 @@ function ballSvg(symbol, color, className) {
   return s;
 }
 const touchOnly = window.matchMedia('(hover: none)'), calm = window.matchMedia('(prefers-reduced-motion: reduce)');
-// PC 下載（橘紅）和網頁版（藍）的差別：圖示、文字、顏色都不同
+// PC 下載（橘紅）、網頁版（藍）與遊戲（紫）的差別：圖示、文字、顏色都不同
 const KIND = {
   '下載': { key: 'download', tag: 'PC 下載', long: 'PC 版', go: '下載 PC 版' },
   '網頁': { key: 'web', tag: '網頁版', long: '網頁版', go: '開啟網頁版' },
+  '遊戲': { key: 'game', tag: '線上遊玩', long: '線上小遊戲', go: '開始遊玩' },
 };
 const kindOf = (t) => KIND[t.type];
 const pad = (n) => String(n).padStart(2, '0');
@@ -78,7 +79,7 @@ function drawCount() {
     box.append(s);
   }
   $('num').textContent = 'x' + pad(tools.length);
-  $('count').setAttribute('aria-label', '已收納 ' + tools.length + ' 件工具');
+  $('count').setAttribute('aria-label', '已收納 ' + tools.length + (mode === 'games' ? ' 款遊戲' : ' 件工具'));
   $('count').setAttribute('role', 'group');
 }
 
@@ -138,6 +139,7 @@ function fillPanel(t) {
   const kind = kindOf(t);
   panel.classList.toggle('kind-web', kind.key === 'web');
   panel.classList.toggle('kind-download', kind.key === 'download');
+  panel.classList.toggle('kind-game', kind.key === 'game');
   $('p-type').replaceChildren(ballSvg('k-' + kind.key), el('span', '', kind.long));
   setName($('p-name'), t.name);
   $('p-desc').textContent = t.desc || '';
@@ -153,7 +155,7 @@ function fillPanel(t) {
   if (t.url) {
     go.href = t.url;
     go.replaceChildren(ballSvg('k-' + kind.key), el('span', '', kind.go));
-    if (t.type === '網頁') { go.target = '_blank'; go.rel = 'noopener'; } else { go.removeAttribute('target'); go.rel = 'noopener'; }
+    if (t.type === '網頁' || t.type === '遊戲') { go.target = '_blank'; go.rel = 'noopener'; } else { go.removeAttribute('target'); go.rel = 'noopener'; }
   } else {
     go.removeAttribute('href');
     go.removeAttribute('target');
@@ -178,7 +180,7 @@ function select(i, byUser) {
 function deselect() {
   if (selected < 0) return;
   select(-1, false);
-  setHash(location.pathname + location.search);
+  setHash(mode === 'games' ? '#games' : location.pathname + location.search);
 }
 let hashTimer = 0;
 function setHash(url) {
@@ -194,7 +196,7 @@ const frame = () => new Promise((r) => requestAnimationFrame(r));
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 let sheetTurn = 0; // 每次開關加一，中途反悔時舊的動作就失效
 function lockPage(on) {
-  [$('top'), $('rack'), $('intro')].forEach((e) => { e.inert = on; });
+  [$('top'), $('mode-bar'), $('rack'), $('intro'), $('intro-games')].forEach((e) => { if (e) e.inert = on; });
   sheetPanel.inert = phone.matches && !on; // 手機關著時先放在畫面外備好，但不能操作
   if (on) { sheetPanel.setAttribute('role', 'dialog'); sheetPanel.setAttribute('aria-modal', 'true'); } else { sheetPanel.removeAttribute('role'); sheetPanel.removeAttribute('aria-modal'); }
 }
@@ -261,7 +263,13 @@ if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => $('art')
 
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('unlock').open) { closeSheet(); deselect(); } });
 phone.addEventListener('change', () => { closeSheet(); if (phone.matches) deselect(); else showPanel(); lockPage(false); });
-$('home').onclick = (e) => { e.preventDefault(); closeSheet(); deselect(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+$('home').onclick = (e) => {
+  e.preventDefault();
+  closeSheet();
+  if (mode !== 'tools') switchMode('tools', { updateHash: true });
+  else deselect();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
 
 // 點空白處取消選取；拖曳選字、捲動、點捲軸都不算
 let down = null;
@@ -277,7 +285,8 @@ document.addEventListener('pointerup', (e) => {
 const asked = new Set();
 function loadMissingFonts() {
   const want = (text, have) => [...new Set(text)].filter((c) => c > '\u007f' && /\S/.test(c) && !have.includes(c));
-  const text = document.body.textContent + JSON.stringify(tools), heads = tools.map((t) => t.name).join('') + $('intro-title').textContent;
+  const allItems = [...pub, ...priv, ...games];
+  const text = document.body.textContent + JSON.stringify(allItems), heads = allItems.map((t) => t.name).join('') + $('intro-title').textContent + ($('intro-games-title')?.textContent || '');
   for (const [weights, chars] of [['400;500', want(text, ALL)], ['900', want(heads, HEAVY)]]) {
     const fresh = chars.filter((c) => !asked.has(weights + c)).slice(0, 400);
     if (!fresh.length) continue;
@@ -299,21 +308,55 @@ async function privateApi(path, body) {
     return { status: r.status, data: await r.json().catch(() => ({})) };
   } catch { return { status: 0, data: {} }; }
 }
+function updateModeUI() {
+  document.body.classList.toggle('is-games', mode === 'games');
+  $('tab-tools')?.setAttribute('aria-selected', String(mode === 'tools'));
+  $('tab-games')?.setAttribute('aria-selected', String(mode === 'games'));
+  $('rack')?.setAttribute('aria-label', mode === 'games' ? '遊戲欄位' : '工具欄位');
+  if ($('cnt-tools')) $('cnt-tools').textContent = pad(pub.length + priv.length);
+  if ($('cnt-games')) $('cnt-games').textContent = pad(games.length);
+}
+function switchMode(next, { keepId = '', updateHash = true } = {}) {
+  const target = next === 'games' && games.length ? 'games' : 'tools';
+  closeSheet();
+  mode = target;
+  tools = mode === 'games' ? games : [...pub, ...priv];
+  selected = -1;
+  updateModeUI();
+  redraw(keepId);
+  if (!document.body.classList.contains('sheet-ready')) lockPage(false);
+  if (updateHash && !keepId) setHash(mode === 'games' ? '#games' : location.pathname + location.search);
+}
+$('tab-tools')?.addEventListener('click', () => switchMode('tools'));
+$('tab-games')?.addEventListener('click', () => switchMode('games'));
+$('mode-bar')?.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    e.preventDefault();
+    const next = mode === 'tools' ? 'games' : 'tools';
+    switchMode(next);
+    $(next === 'games' ? 'tab-games' : 'tab-tools')?.focus();
+  }
+});
+
 function setPrivate(list, fromLink) {
   const ids = new Set(pub.map((t) => t.id));
   const keep = selected >= 0 ? tools[selected]?.id : location.hash.slice(1);
   priv = (Array.isArray(list) ? list : []).filter((t) => t && t.id && t.name && !ids.has(t.id)).map((t) => ({ ...t, type: t.type === '網頁' ? '網頁' : '下載', private: true }));
-  tools = [...pub, ...priv];
+  const open = priv.length > 0;
+  $('lock').classList.toggle('open', open);
+  $('lock').querySelector('use').setAttribute('href', open ? '#k-unlock' : '#k-lock');
   if (!pub.length) return;
+  const hitPriv = priv.some((t) => t.id === keep);
+  if (mode === 'games' && !(fromLink && hitPriv)) { updateModeUI(); loadMissingFonts(); return; }
+  if (fromLink && hitPriv) mode = 'tools';
+  tools = [...pub, ...priv];
+  updateModeUI();
   drawCount();
   drawRack();
   const i = tools.findIndex((t) => t.id === keep);
   select(i, false);
   // 網址指定的是私人軟體時，手機和公開工具一樣直接打開說明牌
   if (i >= 0 && fromLink && phone.matches) openSheet();
-  const open = priv.length > 0;
-  $('lock').classList.toggle('open', open);
-  $('lock').querySelector('use').setAttribute('href', open ? '#k-unlock' : '#k-lock');
   loadMissingFonts();
 }
 async function loadPrivate() {
@@ -377,13 +420,15 @@ function redraw(keepId) {
   select(i, i >= 0); // 網址沒有指定工具時，先顯示介紹
 }
 async function start() {
-  // 三份資料同時讀，不用一個等一個
+  // 所有清單同時讀，不用一個等一個
   const releasesReady = getJson('releases.json'), liveReady = getJson('/api/live');
+  const gamesReady = fetch('games.txt').then((r) => (r.ok ? r.text() : '')).catch(() => '');
+  let parsedTools = [];
   try {
     const res = await fetch('tools.txt');
     if (!res.ok) throw new Error(String(res.status));
-    tools = parseTools(await res.text());
-    if (!tools.length) throw new Error('empty');
+    parsedTools = parseTools(await res.text());
+    if (!parsedTools.length) throw new Error('empty');
   } catch {
     const box = el('div', 'error', '工具清單讀不到，請檢查網路後再試一次。');
     const retry = el('button', '', '重新讀取');
@@ -394,23 +439,31 @@ async function start() {
     return;
   }
   $('panel').hidden = false;
-  const releases = await releasesReady;
+  const [releases, gamesText] = await Promise.all([releasesReady, gamesReady]);
+  games = parseTools(gamesText);
   // 「檔案」放在私人空間、但已經公開的軟體，直接從那裡下載
-  pub = tools.map((t) => mergeTool(t.file && !t.url ? { ...t, url: fileUrl(t.file) } : t, t.release && releases[t.release]));
-  tools = [...pub, ...priv];
-  redraw(location.hash.slice(1));
-  if (!document.body.classList.contains('sheet-ready')) lockPage(false);
+  pub = parsedTools.map((t) => mergeTool(t.file && !t.url ? { ...t, url: fileUrl(t.file) } : t, t.release && releases[t.release]));
+  const hash = location.hash.slice(1);
+  const startInGames = games.length > 0 && (hash === 'games' || games.some((g) => g.id === hash));
+  switchMode(startInGames ? 'games' : 'tools', { keepId: hash === 'games' ? '' : hash, updateHash: false });
   // 手機先在背後準備好說明牌和字型，第一次點開才不會卡
-  if (phone.matches) setTimeout(() => { if (selected < 0) fillPanel(tools[0]); document.fonts?.load?.('500 16px "NF Mono"'); document.body.classList.add('sheet-warm'); }, 600);
+  if (phone.matches) setTimeout(() => { if (selected < 0 && tools[0]) fillPanel(tools[0]); document.fonts?.load?.('500 16px "NF Mono"'); document.body.classList.add('sheet-warm'); }, 600);
   loadMissingFonts();
   if (remembered()) loadPrivate();
   // 軟體自己的線上更新清單最後讀，讀到才更新畫面
   const live = await liveReady;
   if (Object.keys(live).length) {
     pub = pub.map((t) => mergeTool(t, live[t.id]));
-    tools = [...pub, ...priv];
-    showPanel();
+    if (mode === 'tools') {
+      tools = [...pub, ...priv];
+      showPanel();
+    }
     loadMissingFonts();
   }
 }
+window.addEventListener('hashchange', () => {
+  const h = location.hash.slice(1);
+  if (h === 'games' || games.some((g) => g.id === h)) switchMode('games', { keepId: h === 'games' ? '' : h, updateHash: false });
+  else switchMode('tools', { keepId: h, updateHash: false });
+});
 start();

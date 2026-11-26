@@ -8,7 +8,7 @@ import { onRequest as privateApi } from './functions/api/private/[[path]].js';
 const text = fs.readFileSync(new URL('./public/tools.txt', import.meta.url), 'utf8');
 const tools = parseTools(text);
 assert.deepEqual(tools.map((t) => t.id), ['game-time', 'stock']);
-// 私人軟體不能出現在公開的檔案裡
+// 私人軟體不能出現在公開的檔案裡（軟體改成公開時，把它的名字從這裡拿掉）
 for (const f of ['tools.txt', 'index.html', 'releases.json']) assert.doesNotMatch(fs.readFileSync(new URL('./public/' + f, import.meta.url), 'utf8'), /麥克風|GoFile|MicVolume/i, f);
 assert.equal(tools[0].source.startsWith('https://'), true);
 assert.equal(new Set(tools.map((t) => t.colorValue)).size, tools.length);
@@ -76,6 +76,14 @@ assert.equal((await call('list', { headers: { Cookie: cookie.split(';')[0].repla
 assert.equal((await call('list', auth, { ...env, PRIVATE_PASSWORD: 'new password' })).status, 401); // 換密碼，舊的全部失效
 for (let i = 0; i < 5; i++) await post('login', { password: 'x' + i }, { 'CF-Connecting-IP': '9.9.9.9' });
 assert.equal((await post('login', { password: 'correct horse' }, { 'CF-Connecting-IP': '9.9.9.9' })).status, 429);
+// 公開時檔案不用搬：寫進公開清單的檔案，不用密碼就能下載；私人的還是要密碼
+const pubEnv = { ...env, ASSETS: { fetch: async () => new Response('代號：b\n名稱：已公開\n檔案：b.exe') } };
+const pubFile = await call('file/b.exe', {}, pubEnv);
+assert.deepEqual([pubFile.status, await pubFile.text()], [200, 'B']);
+assert.equal((await call('file/mic/a.exe', {}, pubEnv)).status, 401);
+assert.equal((await call('file/other.exe', {}, pubEnv)).status, 401);
+const liveFile = await (await onRequestGet({ request: new Request('https://site.test/api/live'), env: pubEnv })).json();
+assert.deepEqual(liveFile.b, { url: '/api/private/file/b.exe', size: 1 });
 // 說明牌不顯示更新內容（使用者決定），不要加回
 for (const f of ['index.html', 'app.js']) assert.doesNotMatch(fs.readFileSync(new URL('./public/' + f, import.meta.url), 'utf8'), /這一版更新了什麼|notes-list/, f);
 console.log('PASS 私人下載、清單解析、手動編輯錯誤、線上更新清單、GitHub 發布、版本比較、來源故障');

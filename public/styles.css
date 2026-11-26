@@ -149,10 +149,10 @@ body:not(.is-games) #intro-games, body.is-games #intro { display: none !importan
 .intro > p span { display: block; }
 .close, .grab, .veil { display: none; }
 .p-head { display: flex; align-items: center; gap: 16px; }
-.p-head > div { min-width: 0; }
+.p-head > div { flex: 1; min-width: 0; }
 .p-icon { flex: none; border-radius: 14px; object-fit: contain; }
-.p-type { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 6px; padding: 3px 11px 3px 9px; border-radius: 5px; background: var(--kind); color: #fff; font-size: 14px; font-weight: 500; }
-.p-type svg { width: 16px; height: 16px; }
+.p-type { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 6px; padding: 3px 11px 3px 9px; border-radius: 5px; background: var(--kind); color: #fff; font-size: 14px; font-weight: 500; white-space: nowrap; }
+.p-type svg { width: 16px; height: 16px; flex: none; }
 .p-head h2 { font-size: 22px; font-weight: 900; line-height: 1.35; text-wrap: balance; overflow-wrap: anywhere; }
 .p-desc { margin-top: 16px; }
 .spec { margin-top: 18px; border-bottom: 1px solid var(--seam); }

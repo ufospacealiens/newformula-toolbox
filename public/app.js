@@ -46,7 +46,7 @@ const touchOnly = window.matchMedia('(hover: none)'), calm = window.matchMedia('
 const KIND = {
   '下載': { key: 'download', tag: 'PC 下載', long: 'PC 版', go: '下載 PC 版' },
   '網頁': { key: 'web', tag: '網頁版', long: '網頁版', go: '開啟網頁版' },
-  '遊戲': { key: 'game', tag: '線上遊玩', long: '線上小遊戲', go: '開始遊玩' },
+  '遊戲': { key: 'game', tag: '線上遊玩', long: '小遊戲', go: '開始遊玩' },
 };
 const kindOf = (t) => KIND[t.type];
 const pad = (n) => String(n).padStart(2, '0');

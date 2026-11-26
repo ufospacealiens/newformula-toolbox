@@ -1,4 +1,4 @@
-import { parseTools, mergeTool, formatSize } from './tools-core.js?v=752c2d59';
+import { parseTools, mergeTool, formatSize } from './tools-core.js?v=5a0938a9';
 import { ALL, HEAVY } from './font-chars.js?v=1091eecd';
 
 const $ = (id) => document.getElementById(id);
@@ -6,6 +6,7 @@ const SVG = 'http://www.w3.org/2000/svg';
 const phone = window.matchMedia('(max-width: 720px)');
 const MAX_BALLS = 8, MIN_SLOTS = 8, NEW_DAYS = 14;
 let tools = [], selected = -1, lastFocus = null; // selected 是 -1：沒有選工具，右邊顯示介紹
+let pub = [], priv = []; // 公開的工具、輸入密碼後才有的私人軟體
 
 // 標誌螢幕裡的像素扳手
 const WRENCH = ['......##..', '.....##...', '.....##..#', '.....##.##', '.....#####', '....#####.', '...####...', '..###.....', '.###......', '.##.......'];
@@ -97,6 +98,7 @@ function drawRack() {
     strip.append(ballSvg('k-' + kind.key), el('span', '', kind.tag));
     b.append(strip);
     if (t.date && isNew(t.date)) b.append(el('span', 'slot-new', 'NEW'));
+    if (t.private) { const lock = el('span', 'slot-lock'); lock.append(ballSvg('k-lock'), el('span', 'sr', '私人')); b.append(lock); }
     b.onclick = () => select(i, true);
     b.onmouseenter = () => light(i, true);
     b.onmouseleave = () => light(i, false);
@@ -141,7 +143,7 @@ function fillPanel(t) {
   $('p-desc').textContent = t.desc || '';
   const spec = $('spec');
   spec.replaceChildren();
-  [['適用', t.platform, ''], ['版本', t.version, 'm'], ['大小', formatSize(t.size), 'm'], ['更新日期', t.date && t.date.replaceAll('-', '/'), 'm']].forEach(([k, v, c]) => {
+  [['適用', t.platform, ''], ['下載', t.private && '私人（需要密碼）', ''], ['版本', t.version, 'm'], ['大小', formatSize(t.size), 'm'], ['更新日期', t.date && t.date.replaceAll('-', '/'), 'm']].forEach(([k, v, c]) => {
     if (!v) return;
     const row = el('div');
     row.append(el('dt', '', k), el('dd', c, v));
@@ -257,13 +259,13 @@ veil.addEventListener('touchmove', (e) => { if (e.cancelable) e.preventDefault()
 // 小人只在看得到的時候動
 if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => $('art').classList.toggle('still', e.intersectionRatio < 0.5), { threshold: [0, 0.5] }).observe($('art'));
 
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSheet(); deselect(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('unlock').open) { closeSheet(); deselect(); } });
 phone.addEventListener('change', () => { closeSheet(); if (phone.matches) deselect(); else showPanel(); lockPage(false); });
 $('home').onclick = (e) => { e.preventDefault(); closeSheet(); deselect(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
 // 點空白處取消選取；拖曳選字、捲動、點捲軸都不算
 let down = null;
-const isBlank = (e) => e.target instanceof Element && !e.target.closest('.slot, .panel, button, a, summary') && e.clientX < document.documentElement.clientWidth;
+const isBlank = (e) => e.target instanceof Element && !e.target.closest('.slot, .panel, button, a, summary, dialog') && e.clientX < document.documentElement.clientWidth;
 document.addEventListener('pointerdown', (e) => { down = e.button === 0 && isBlank(e) ? { x: e.clientX, y: e.clientY } : null; });
 document.addEventListener('pointercancel', () => { down = null; });
 document.addEventListener('pointerup', (e) => {
@@ -286,6 +288,84 @@ function loadMissingFonts() {
     document.head.append(link);
   }
 }
+
+// 私人下載：輸入密碼後，私人軟體接在公開工具後面。是否解鎖由伺服器的 Cookie 決定，這裡只記「上次有解鎖」，免得每個人都多問一次
+const FLAG = 'nf-private', dialog = $('unlock');
+function remembered() { try { return localStorage.getItem(FLAG) === '1'; } catch { return false; } }
+function remember(on) { try { if (on) localStorage.setItem(FLAG, '1'); else localStorage.removeItem(FLAG); } catch { /* 無痕模式 */ } }
+async function privateApi(path, body) {
+  try {
+    const r = await fetch('/api/private/' + path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { cache: 'no-store' });
+    return { status: r.status, data: await r.json().catch(() => ({})) };
+  } catch { return { status: 0, data: {} }; }
+}
+function setPrivate(list, fromLink) {
+  const ids = new Set(pub.map((t) => t.id));
+  const keep = selected >= 0 ? tools[selected]?.id : location.hash.slice(1);
+  priv = (Array.isArray(list) ? list : []).filter((t) => t && t.id && t.name && !ids.has(t.id)).map((t) => ({ ...t, type: t.type === '網頁' ? '網頁' : '下載', private: true }));
+  tools = [...pub, ...priv];
+  if (!pub.length) return;
+  drawCount();
+  drawRack();
+  const i = tools.findIndex((t) => t.id === keep);
+  select(i, false);
+  // 網址指定的是私人軟體時，手機和公開工具一樣直接打開說明牌
+  if (i >= 0 && fromLink && phone.matches) openSheet();
+  const open = priv.length > 0;
+  $('lock').classList.toggle('open', open);
+  $('lock').querySelector('use').setAttribute('href', open ? '#k-unlock' : '#k-lock');
+  loadMissingFonts();
+}
+async function loadPrivate() {
+  const { status, data } = await privateApi('list');
+  if (status === 200) setPrivate(data.tools, selected < 0);
+  else if (status === 401) remember(false);
+}
+const ERRORS = { 0: '連不上網站，請檢查網路後再試', 401: '密碼不對，請再試一次', 429: '打錯太多次了，請 10 分鐘後再試', 503: '私人下載還沒設定好' };
+function showDialog() {
+  const open = priv.length > 0;
+  $('unlock-ask').hidden = open;
+  $('unlock-done').hidden = !open;
+  $('unlock-ok').textContent = open ? '鎖上' : '解鎖';
+  $('unlock-cancel').textContent = open ? '關閉' : '取消';
+  $('unlock-err').textContent = '';
+  $('unlock-pw').value = '';
+  $('unlock-ok').disabled = false;
+  dialog.showModal();
+  if (!open) $('unlock-pw').focus();
+}
+$('lock').onclick = showDialog;
+$('unlock-cancel').onclick = () => dialog.close();
+dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); }); // 點視窗外面關閉
+$('unlock-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('unlock-ok');
+  if (btn.disabled) return;
+  if (priv.length) { // 已解鎖：鎖上
+    btn.disabled = true;
+    await privateApi('logout', {});
+    remember(false);
+    setPrivate([]);
+    dialog.close();
+    return;
+  }
+  const password = $('unlock-pw').value;
+  if (!password) { $('unlock-err').textContent = '請輸入密碼'; $('unlock-pw').focus(); return; }
+  btn.disabled = true;
+  btn.textContent = '確認中…';
+  const { status, data } = await privateApi('login', { password });
+  btn.disabled = false;
+  btn.textContent = '解鎖';
+  if (status === 200) {
+    remember(true);
+    setPrivate(data.tools);
+    dialog.close();
+    if (!priv.length) { $('unlock-err').textContent = ''; }
+    return;
+  }
+  $('unlock-err').textContent = ERRORS[status] || '出了點問題，請稍後再試';
+  $('unlock-pw').select();
+});
 
 async function getJson(path) {
   try { const r = await fetch(path); return r.ok ? await r.json() : {}; } catch { return {}; }
@@ -315,16 +395,19 @@ async function start() {
   }
   $('panel').hidden = false;
   const releases = await releasesReady;
-  tools = tools.map((t) => mergeTool(t, t.release && releases[t.release]));
+  pub = tools.map((t) => mergeTool(t, t.release && releases[t.release]));
+  tools = [...pub, ...priv];
   redraw(location.hash.slice(1));
   if (!document.body.classList.contains('sheet-ready')) lockPage(false);
   // 手機先在背後準備好說明牌和字型，第一次點開才不會卡
   if (phone.matches) setTimeout(() => { if (selected < 0) fillPanel(tools[0]); document.fonts?.load?.('500 16px "NF Mono"'); document.body.classList.add('sheet-warm'); }, 600);
   loadMissingFonts();
+  if (remembered()) loadPrivate();
   // 軟體自己的線上更新清單最後讀，讀到才更新畫面
   const live = await liveReady;
   if (Object.keys(live).length) {
-    tools = tools.map((t) => mergeTool(t, live[t.id]));
+    pub = pub.map((t) => mergeTool(t, live[t.id]));
+    tools = [...pub, ...priv];
     showPanel();
     loadMissingFonts();
   }

@@ -157,6 +157,28 @@ span.ball svg { transform: none !important; }
 .author:active svg { transform: scale(.9); }
 @media (hover: hover) { .author:hover svg { transform: scale(1.15); } .author:hover b { text-decoration-color: var(--red); } }
 .grille { display: flex; gap: 8px; }
+/* 私人下載：頁尾的小鎖頭和輸入密碼的小視窗 */
+.lock { display: grid; place-items: center; width: 44px; height: 44px; margin: 0 10px 0 auto; padding: 0; border: 0; border-radius: 8px; background: none; color: #A79F8D; cursor: pointer; }
+.lock svg { width: 18px; height: 18px; }
+.lock.open { color: var(--red); }
+@media (hover: hover) { .lock:hover { color: var(--dim); } .lock.open:hover { color: var(--red-deep); } }
+.slot-lock { position: absolute; top: 7px; left: 34px; display: flex; color: var(--dim); }
+.slot-lock svg { width: 13px; height: 13px; }
+.unlock { width: min(360px, calc(100vw - 32px)); padding: 0; border: 3px solid var(--ink); border-radius: 12px; background: var(--plate); color: var(--ink); box-shadow: 0 6px 0 rgba(37, 35, 31, .25); }
+.unlock::backdrop { background: rgba(37, 35, 31, .5); }
+.unlock form { display: flex; flex-direction: column; gap: 12px; padding: 22px 20px 20px; }
+.unlock h2 { margin: 0; font-size: 20px; font-weight: 900; }
+.unlock p { margin: 0; }
+.u-ask { display: flex; flex-direction: column; gap: 12px; }
+.u-note { color: var(--dim); font-size: 15px; }
+.unlock input { width: 100%; min-height: 48px; padding: 0 14px; border: 2px solid var(--seam); border-radius: 8px; background: var(--slot); color: var(--ink); font: 500 18px var(--sans); }
+.unlock input:focus { border-color: var(--ink); outline: none; }
+.u-err { color: var(--red); font-size: 15px; }
+.u-err:empty { display: none; }
+.u-btns { display: flex; justify-content: flex-end; gap: 10px; }
+.u-btns button { min-height: 46px; padding: 0 20px; border: 2px solid var(--ink); border-radius: 8px; background: none; font-weight: 500; cursor: pointer; }
+.u-btns button[type="submit"] { background: var(--ink); color: #FFFDF6; }
+.u-btns button:disabled { opacity: .6; cursor: default; }
 .grille i { width: 6px; height: 34px; border-radius: 3px; background: var(--seam); transform: skewX(-18deg); }
 
 /* ---------- 平板 ---------- */

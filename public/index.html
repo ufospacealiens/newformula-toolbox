@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>新配方的工具箱</title>
-<meta name="description" content="新配方自己做的工具，都收在這裡。遊戲時光管理器、麥克風音量、GoFile 下載器、股票費用計算機。">
+<meta name="description" content="新配方自己做的工具，都收在這裡。遊戲時光管理器、股票費用計算機。">
 <meta name="theme-color" content="#E8E4DA">
 <meta property="og:title" content="新配方的工具箱">
 <meta property="og:description" content="自己做的工具，都收在這裡">
@@ -12,15 +12,15 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="site.webmanifest">
-<link rel="stylesheet" href="styles.css?v=d3d94a83">
+<link rel="stylesheet" href="styles.css?v=15551ff0">
 <!-- 要用的東西一起下載，不用一個等一個 -->
 <!--FONTS-->
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/sans-400.dc161160.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/sans-500.505d9ef4.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/sans-900.12b8cb1e.woff2">
 <!--/FONTS-->
-<link rel="modulepreload" href="app.js?v=cd474cb2">
-<link rel="modulepreload" href="tools-core.js?v=752c2d59">
+<link rel="modulepreload" href="app.js?v=9282753f">
+<link rel="modulepreload" href="tools-core.js?v=5a0938a9">
 <link rel="modulepreload" href="font-chars.js?v=1091eecd">
 <link rel="preload" as="fetch" crossorigin href="tools.txt">
 <link rel="preload" as="fetch" crossorigin href="releases.json">
@@ -32,6 +32,8 @@
   <symbol id="ball" viewBox="0 0 44 44"><g transform="rotate(-14 22 22)"><circle cx="22" cy="22" r="20" fill="#25231F"/><circle cx="22" cy="22" r="17.5" fill="currentColor"/><path d="M4.500 22a17.500 17.500 0 0 0 35 0z" fill="#25231F" fill-opacity=".3"/><path d="M4.500 22h35" stroke="#F4F0E4" stroke-width="3.500"/><ellipse cx="14" cy="13" rx="4.500" ry="3.200" fill="#fff" transform="rotate(-38 14 13)"/><path d="M22 13.500l7.400 4.250v8.500L22 30.500l-7.400-4.250v-8.500z" fill="#F4F0E4" stroke="#25231F" stroke-width="2.500" stroke-linejoin="round"/><circle cx="22" cy="22" r="3.600" fill="#25231F"/></g></symbol>
   <symbol id="k-download" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2.400"/><path d="M8 21h8M12 17v4M12 6v6.500m0 0l-2.800-2.800m2.800 2.800l2.800-2.800" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="k-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.500" fill="none" stroke="currentColor" stroke-width="2.400"/><path d="M2.500 12h19M12 2.500c3 2.700 4.200 5.800 4.200 9.500S15 18.800 12 21.500c-3-2.700-4.200-5.800-4.200-9.500S9 5.200 12 2.500z" fill="none" stroke="currentColor" stroke-width="2.200"/></symbol>
+  <symbol id="k-lock" viewBox="0 0 24 24"><rect x="4" y="10.500" width="16" height="11" rx="2.500" fill="currentColor"/><path d="M8 10.500v-3a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.400"/></symbol>
+  <symbol id="k-unlock" viewBox="0 0 24 24"><rect x="4" y="10.500" width="16" height="11" rx="2.500" fill="currentColor"/><path d="M8 10.500v-3a4 4 0 0 1 7.700-1.500" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round"/></symbol>
   <symbol id="ball-empty" viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" fill="none" stroke="#A79F8D" stroke-width="2.500" stroke-dasharray="4 4"/></symbol>
 </defs></svg>
 
@@ -79,9 +81,23 @@
   </aside>
 </main>
 
-<footer class="foot"><a class="author" href="https://www.youtube.com/@%E6%96%B0%E9%85%8D%E6%96%B9" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="4.500" fill="#C93A10"/><path d="M10 8.500v7l6-3.500z" fill="#fff"/></svg><span>作者：<b>新配方</b></span><span class="sr">，開啟 YouTube 頻道</span></a><span class="grille" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></footer>
+<!-- 私人下載：輸入密碼後，還沒公開的軟體會接在工具格最後面 -->
+<dialog class="unlock" id="unlock" aria-labelledby="unlock-title">
+  <form id="unlock-form" novalidate>
+    <h2 id="unlock-title">私人下載</h2>
+    <div class="u-ask" id="unlock-ask">
+      <p class="u-note">輸入密碼，就能下載還沒公開的軟體</p>
+      <label class="sr" for="unlock-pw">密碼</label>
+      <input id="unlock-pw" type="password" autocomplete="current-password" enterkeyhint="done" placeholder="密碼">
+    </div>
+    <p class="u-note" id="unlock-done" hidden>已解鎖。私人軟體放在工具格最後面，有鎖頭標記</p>
+    <p class="u-err" id="unlock-err" role="alert"></p>
+    <div class="u-btns"><button type="button" id="unlock-cancel">取消</button><button type="submit" id="unlock-ok">解鎖</button></div>
+  </form>
+</dialog>
+<footer class="foot"><a class="author" href="https://www.youtube.com/@%E6%96%B0%E9%85%8D%E6%96%B9" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="4.500" fill="#C93A10"/><path d="M10 8.500v7l6-3.500z" fill="#fff"/></svg><span>作者：<b>新配方</b></span><span class="sr">，開啟 YouTube 頻道</span></a><button class="lock" id="lock" type="button" aria-haspopup="dialog" title="私人下載"><svg aria-hidden="true"><use href="#k-lock"/></svg><span class="sr">私人下載</span></button><span class="grille" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></footer>
 <noscript><p class="foot">這個網站需要開啟 JavaScript 才能顯示工具。</p></noscript>
 <!--/PAGE-->
-<script type="module" src="app.js?v=cd474cb2"></script>
+<script type="module" src="app.js?v=9282753f"></script>
 </body>
 </html>

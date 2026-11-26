@@ -2,7 +2,7 @@
 const FIELDS = {
   '代號': 'id', '名稱': 'name', '說明': 'desc', '類型': 'type', '系統': 'platform', '顏色': 'color',
   '圖示': 'icon', '版本': 'version', '大小': 'size', '更新日期': 'date', '網址': 'url',
-  '版本來源': 'source', '下載區': 'release',
+  '版本來源': 'source', '下載區': 'release', '檔案': 'file',
 };
 export const COLORS = {
   '橘紅': '#C93A10', '藍': '#2F5D8C', '黃': '#F2B632', '綠': '#7E9A4C',
@@ -41,6 +41,8 @@ export function parseTools(text) {
     url: safeUrl(t.url),
     source: safeUrl(t.source),
     icon: /^[\w.-]+$/.test(t.icon || '') ? t.icon : '',
+    // 私人下載的檔案位置，例如 app/App.exe
+    file: /^[\w-]+(\/[\w.-]+)+$/.test(t.file || '') && !t.file.includes('..') ? t.file : '',
   }));
 }
 
@@ -63,7 +65,7 @@ export function readManifest(json, sourceUrl, lastModified) {
   };
 }
 
-// GitHub Releases → 每個下載區的最新版。標籤格式：代號-版本，例如 gofile-1.1.0。
+// GitHub Releases → 每個下載區的最新版。標籤格式：代號-版本，例如 app-1.0.0。
 export function readReleases(list) {
   const out = {};
   for (const r of Array.isArray(list) ? list : []) {

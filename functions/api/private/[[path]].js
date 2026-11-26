@@ -2,7 +2,8 @@
 // Cloudflare 上要設定兩樣（正式版和預覽版都要）：
 //   R2 儲存空間綁定，名稱 PRIVATE：放 tools.txt（格式和公開清單一樣，多一個「檔案」欄位）和軟體檔案
 //   機密變數 PRIVATE_PASSWORD：密碼，只有使用者知道。換密碼後，所有人都要重新輸入
-import { parseTools } from '../../../public/tools-core.js';
+// 要公開某個軟體時，檔案不用搬：把那一段移到公開的 tools.txt（保留「檔案」），就不需要密碼也能下載。
+import { parseTools, fileUrl } from '../../../public/tools-core.js';
 
 const COOKIE = 'nf_private', DAYS = 30, MAX_FAILS = 5, FAIL_WINDOW = 10 * 60e3;
 const enc = new TextEncoder();
@@ -29,21 +30,42 @@ async function unlocked(request, env) {
   return same(m[2], await sign(env.PRIVATE_PASSWORD, m[1]));
 }
 
-// 讀私人清單；大小沒填就用檔案實際大小
-async function readList(env) {
+// 兩份清單：私人的放在 R2，公開的是網站上的 tools.txt
+async function privateTools(env) {
   const obj = await env.PRIVATE.get('tools.txt');
-  if (!obj) return [];
-  const tools = parseTools(await obj.text());
-  return Promise.all(tools.map(async (t) => {
-    const out = { id: t.id, name: t.name, desc: t.desc, type: t.type, platform: t.platform, colorValue: t.colorValue, icon: t.icon, version: t.version, size: t.size, date: t.date, url: t.url, file: t.file };
+  return obj ? parseTools(await obj.text()) : [];
+}
+async function publicTools(request, env) {
+  try {
+    const res = await env.ASSETS.fetch(new URL('/tools.txt', request.url));
+    return res.ok ? parseTools(await res.text()) : [];
+  } catch { return []; }
+}
+
+// 私人清單給網頁用；大小沒填就用檔案實際大小
+async function readList(env) {
+  return Promise.all((await privateTools(env)).map(async (t) => {
+    const out = { id: t.id, name: t.name, desc: t.desc, type: t.type, platform: t.platform, colorValue: t.colorValue, icon: t.icon, version: t.version, size: t.size, date: t.date, url: t.url };
     if (t.file) {
       const head = await env.PRIVATE.head(t.file);
-      out.url = head ? '/api/private/file/' + t.file.split('/').map(encodeURIComponent).join('/') : '';
+      out.url = head ? fileUrl(t.file) : '';
       if (head && !out.size) out.size = head.size;
     }
-    delete out.file;
     return out;
   }));
+}
+
+function sendFile(obj, key, method, isPublic) {
+  const name = key.split('/').pop();
+  return new Response(method === 'HEAD' ? null : obj.body, {
+    headers: {
+      'Content-Type': 'application/octet-stream',
+      'Content-Length': String(obj.size),
+      'Content-Disposition': `attachment; filename="${name.replace(/[^\w.-]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(name)}`,
+      'Cache-Control': isPublic ? 'public, max-age=3600' : 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
 }
 
 export async function onRequest({ request, env, params }) {
@@ -80,26 +102,19 @@ export async function onRequest({ request, env, params }) {
     return json({ ok: true }, 200, { 'Set-Cookie': `${COOKIE}=; Path=/api/private; Max-Age=0; HttpOnly; Secure; SameSite=Strict` });
   }
 
-  if (!(await unlocked(request, env))) return json({ error: 'locked' }, 401);
-
-  if (path === 'list' && method === 'GET') return json({ tools: await readList(env) });
-
   if (path.startsWith('file/') && (method === 'GET' || method === 'HEAD')) {
     const key = path.slice(5);
-    // 只給清單上有的檔案
-    const listed = parseTools(await (await env.PRIVATE.get('tools.txt'))?.text() ?? '').some((t) => t.file === key);
-    const obj = listed && (method === 'HEAD' ? await env.PRIVATE.head(key) : await env.PRIVATE.get(key));
-    if (!obj) return json({ error: 'not-found' }, 404);
-    const name = key.split('/').pop();
-    return new Response(method === 'HEAD' ? null : obj.body, {
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'Content-Length': String(obj.size),
-        'Content-Disposition': `attachment; filename="${name.replace(/[^\w.-]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(name)}`,
-        'Cache-Control': 'private, no-store',
-        'X-Content-Type-Options': 'nosniff',
-      },
-    });
+    // 公開清單上的檔案誰都能下載；私人清單上的要先解鎖；兩份清單都沒有的一律不給
+    const isPublic = (await publicTools(request, env)).some((t) => t.file === key);
+    if (!isPublic) {
+      if (!(await unlocked(request, env))) return json({ error: 'locked' }, 401);
+      if (!(await privateTools(env)).some((t) => t.file === key)) return json({ error: 'not-found' }, 404);
+    }
+    const obj = method === 'HEAD' ? await env.PRIVATE.head(key) : await env.PRIVATE.get(key);
+    return obj ? sendFile(obj, key, method, isPublic) : json({ error: 'not-found' }, 404);
   }
+
+  if (!(await unlocked(request, env))) return json({ error: 'locked' }, 401);
+  if (path === 'list' && method === 'GET') return json({ tools: await readList(env) });
   return json({ error: 'not-found' }, 404);
 }

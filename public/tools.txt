@@ -7,7 +7,9 @@
 # 顏色：橘紅、藍、黃、綠、紫、青、橘、灰
 # 圖示：放在 icons 資料夾的檔名
 # 版本來源：軟體自己的線上更新清單（有填的話，版本、大小、下載網址會自動更新）
-# 下載區：GitHub 發布用的代號，例如 gofile 會讀 gofile-1.1.0 這種標籤（有新版會自動更新）
+# 下載區：GitHub 發布用的代號，例如 app 會讀 app-1.0.0 這種標籤（有新版會自動更新）
+#
+# 私人軟體不寫在這裡（這份清單誰都看得到），寫在 Cloudflare R2 私人空間的 tools.txt，見 README。
 
 代號：game-time
 名稱：遊戲時光管理器
@@ -21,30 +23,6 @@
 更新日期：2026-11-23
 網址：https://pub-fc46c1fb6f2342efb11591e76d4cf7c2.r2.dev/releases/6.2.1/GameTimeSaveManager.exe
 版本來源：https://pub-fc46c1fb6f2342efb11591e76d4cf7c2.r2.dev/updates/latest.json
-
-代號：mic
-名稱：麥克風音量100％一鍵控制
-說明：一鍵把麥克風音量調到 100％
-類型：下載
-系統：PC（Windows 電腦）
-顏色：藍
-圖示：mic.webp
-版本：1.3.0
-大小：71778766
-更新日期：2026-07-22
-下載區：mic
-
-代號：gofile
-名稱：GoFile IDM / XDM 下載器
-說明：貼上分享網址，選擇工具，整批下載
-類型：下載
-系統：PC（Windows 電腦）
-顏色：黃
-圖示：gofile.webp
-版本：1.1.0
-大小：72171044
-更新日期：2026-10-23
-下載區：gofile
 
 代號：stock
 名稱：股票買賣費用計算機 - 國泰證券 2.8 折

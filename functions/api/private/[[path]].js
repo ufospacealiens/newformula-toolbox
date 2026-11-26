@@ -84,7 +84,9 @@ export async function onRequest({ request, env, params }) {
     const f = fails.get(ip);
     if (f && now - f.since < FAIL_WINDOW && f.count >= MAX_FAILS) return json({ error: 'too-many' }, 429);
     const body = await request.json().catch(() => ({}));
-    const ok = typeof body.password === 'string' && same(await sha(body.password), await sha(env.PRIVATE_PASSWORD));
+    // 前後空白、換行、全形數字都不算錯（設定密碼時多按 Enter 或用中文輸入法打數字，看起來一樣卻對不上）
+    const norm = (s) => String(s).normalize('NFKC').trim();
+    const ok = typeof body.password === 'string' && same(await sha(norm(body.password)), await sha(norm(env.PRIVATE_PASSWORD)));
     if (!ok) {
       const g = f && now - f.since < FAIL_WINDOW ? f : { since: now, count: 0 };
       g.count++;

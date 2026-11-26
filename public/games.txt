@@ -15,7 +15,7 @@
 系統：手機、電腦都能玩
 人數：2～8 人連線
 顏色：紫
-圖示：liar-dice.webp
+圖示：liar-dice-cup.webp
 版本：0.6.2
 更新日期：2026-11-26
 網址：https://liar-dice.gametime-library-f5948618.workers.dev/

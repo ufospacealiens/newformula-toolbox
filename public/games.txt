@@ -17,5 +17,5 @@
 顏色：紫
 圖示：liar-dice-cup.webp
 版本：0.7.0
-更新日期：2026-11-27
+更新日期：2026-11-26
 網址：https://liar-dice.gametime-library-f5948618.workers.dev/

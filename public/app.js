@@ -313,8 +313,6 @@ function updateModeUI() {
   $('tab-tools')?.setAttribute('aria-selected', String(mode === 'tools'));
   $('tab-games')?.setAttribute('aria-selected', String(mode === 'games'));
   $('rack')?.setAttribute('aria-label', mode === 'games' ? '遊戲欄位' : '工具欄位');
-  if ($('cnt-tools')) $('cnt-tools').textContent = pad(pub.length + priv.length);
-  if ($('cnt-games')) $('cnt-games').textContent = pad(games.length);
 }
 function switchMode(next, { keepId = '', updateHash = true } = {}) {
   const target = next === 'games' && games.length ? 'games' : 'tools';

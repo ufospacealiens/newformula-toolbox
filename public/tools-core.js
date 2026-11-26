@@ -1,6 +1,6 @@
 // 讀取工具清單、合併線上版本資料。網頁、Cloudflare Function、測試共用同一份。
 const FIELDS = {
-  '代號': 'id', '名稱': 'name', '說明': 'desc', '類型': 'type', '系統': 'platform', '顏色': 'color',
+  '代號': 'id', '名稱': 'name', '說明': 'desc', '類型': 'type', '系統': 'platform', '人數': 'players', '顏色': 'color',
   '圖示': 'icon', '版本': 'version', '大小': 'size', '更新日期': 'date', '網址': 'url',
   '版本來源': 'source', '下載區': 'release', '檔案': 'file',
 };

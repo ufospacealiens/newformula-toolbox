@@ -152,7 +152,8 @@ body:not(.is-games) #intro-games, body.is-games #intro { display: none !importan
 .p-head > div { min-width: 0; }
 .p-icon { flex: none; border-radius: 14px; object-fit: contain; }
 .p-type { display: inline-flex; align-items: center; gap: 7px; margin-bottom: 6px; padding: 3px 11px 3px 9px; border-radius: 5px; background: var(--kind); color: #fff; font-size: 14px; font-weight: 500; }
-.p-type svg { width: 16px; height: 16px; }
+.p-type { white-space: nowrap; }
+.p-type svg { width: 16px; height: 16px; flex: none; }
 .p-head h2 { font-size: 22px; font-weight: 900; line-height: 1.35; text-wrap: balance; overflow-wrap: anywhere; }
 .p-desc { margin-top: 16px; }
 .spec { margin-top: 18px; border-bottom: 1px solid var(--seam); }
@@ -220,7 +221,8 @@ body:not(.is-games) #intro-games, body.is-games #intro { display: none !importan
   .num { font-size: 20px; }
   .mode-bar { margin-top: 16px; }
   .mode-switch { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
-  .mode-btn { padding: 7px 8px; gap: 6px; font-size: 15px; }
+  .mode-btn { position: relative; justify-content: center; padding: 9px 8px; gap: 6px; font-size: 15px; white-space: nowrap; }
+  .mode-new { position: absolute; top: -9px; right: -4px; }
   .bench { display: block; margin-top: 18px; }
   .intro, .has-tool .intro { display: block; position: relative; top: auto; margin-top: 28px; padding: 22px 20px; }
   .rack { gap: 12px; }
@@ -244,6 +246,7 @@ body:not(.is-games) #intro-games, body.is-games #intro { display: none !importan
   .sheet-open .panel { transform: none; }
   .dragging .panel { transition: none; }
   .grab { display: block; position: absolute !important; top: 9px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 2px; background: var(--seam); }
+  .p-head > div { flex: 1; }
   .p-type { max-width: calc(100% - 48px); }
   .close { display: block; position: absolute !important; z-index: 2; top: 14px; right: 14px; width: 44px; height: 44px; border: 0; border-radius: 8px; background: none; font-size: 28px; line-height: 1; cursor: pointer; }
 }

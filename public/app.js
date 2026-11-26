@@ -1,5 +1,5 @@
-import { parseTools, mergeTool, formatSize, fileUrl } from './tools-core.js?v=a0a8d81e';
-import { ALL, HEAVY } from './font-chars.js?v=ccdf5022';
+import { parseTools, mergeTool, formatSize, fileUrl } from './tools-core.js?v=44e1fcfb';
+import { ALL, HEAVY } from './font-chars.js?v=e51e91bf';
 
 const $ = (id) => document.getElementById(id);
 const SVG = 'http://www.w3.org/2000/svg';
@@ -46,7 +46,7 @@ const touchOnly = window.matchMedia('(hover: none)'), calm = window.matchMedia('
 const KIND = {
   '下載': { key: 'download', tag: 'PC 下載', long: 'PC 版', go: '下載 PC 版' },
   '網頁': { key: 'web', tag: '網頁版', long: '網頁版', go: '開啟網頁版' },
-  '遊戲': { key: 'game', tag: '線上遊玩', long: '線上小遊戲', go: '開始遊玩' },
+  '遊戲': { key: 'game', tag: '線上遊玩', long: '線上遊戲', go: '開始遊玩' },
 };
 const kindOf = (t) => KIND[t.type];
 const pad = (n) => String(n).padStart(2, '0');
@@ -106,7 +106,9 @@ function drawRack() {
     b.onkeydown = (e) => moveFocus(e, i);
     rack.append(b);
   });
-  const total = Math.max(MIN_SLOTS, Math.ceil(tools.length / 4) * 4);
+  // 空格補滿到整排；手機一排 2 格、最少 2 排，電腦一排 4 格、最少 2 排
+  const cols = phone.matches ? 2 : 4;
+  const total = Math.max(cols * 2, Math.ceil(tools.length / cols) * cols);
   for (let i = tools.length; i < total; i++) { const s = el('div', 'slot-empty'); s.setAttribute('aria-hidden', 'true'); rack.append(s); }
 }
 
@@ -145,7 +147,7 @@ function fillPanel(t) {
   $('p-desc').textContent = t.desc || '';
   const spec = $('spec');
   spec.replaceChildren();
-  [['適用', t.platform, ''], ['下載', t.private && '私人（需要密碼）', ''], ['版本', t.version, 'm'], ['大小', formatSize(t.size), 'm'], ['更新日期', t.date && t.date.replaceAll('-', '/'), 'm']].forEach(([k, v, c]) => {
+  [['適用', t.platform, ''], ['人數', t.players, ''], ['下載', t.private && '私人（需要密碼）', ''], ['版本', t.version, 'm'], ['大小', formatSize(t.size), 'm'], ['更新日期', t.date && t.date.replaceAll('-', '/'), 'm']].forEach(([k, v, c]) => {
     if (!v) return;
     const row = el('div');
     row.append(el('dt', '', k), el('dd', c, v));
@@ -259,10 +261,10 @@ sheetPanel.addEventListener('touchcancel', endDrag);
 veil.addEventListener('touchmove', (e) => { if (e.cancelable) e.preventDefault(); }, { passive: false });
 
 // 小人只在看得到的時候動
-if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => $('art').classList.toggle('still', e.intersectionRatio < 0.5), { threshold: [0, 0.5] }).observe($('art'));
+if ('IntersectionObserver' in window) for (const art of [$('art'), $('art-games')]) if (art) new IntersectionObserver(([e]) => art.classList.toggle('still', e.intersectionRatio < 0.5), { threshold: [0, 0.5] }).observe(art);
 
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('unlock').open) { closeSheet(); deselect(); } });
-phone.addEventListener('change', () => { closeSheet(); if (phone.matches) deselect(); else showPanel(); lockPage(false); });
+phone.addEventListener('change', () => { closeSheet(); drawRack(); if (phone.matches) deselect(); else showPanel(); lockPage(false); });
 $('home').onclick = (e) => {
   e.preventDefault();
   closeSheet();

@@ -98,4 +98,122 @@ const liveFile = await (await onRequestGet({ request: new Request('https://site.
 assert.deepEqual(liveFile.b, { url: '/api/private/file/b.exe', size: 1 });
 // 說明牌不顯示更新內容（使用者決定），不要加回
 for (const f of ['index.html', 'app.js']) assert.doesNotMatch(fs.readFileSync(new URL('./public/' + f, import.meta.url), 'utf8'), /這一版更新了什麼|notes-list/, f);
-console.log('PASS 私人下載、清單解析、手動編輯錯誤、線上更新清單、GitHub 發布、版本比較、來源故障');
+// ---------- 遊戲區帳號：用電腦內建的 SQLite 假裝 Cloudflare D1，用自己產生的鑰匙假裝 Google ----------
+const { DatabaseSync } = await import('node:sqlite');
+const { handleGame, GIFTS, twDay, cleanName } = await import('./lib/game-server.js');
+const sql = new DatabaseSync(':memory:');
+sql.exec(fs.readFileSync(new URL('./schema/game.sql', import.meta.url), 'utf8'));
+const stmt = (q, args = []) => ({
+  bind: (...a) => stmt(q, a),
+  first: async () => sql.prepare(q).get(...args) ?? null,
+  all: async () => ({ results: sql.prepare(q).all(...args) }),
+  run: async () => ({ meta: { changes: sql.prepare(q).run(...args).changes } }),
+});
+const GAME_DB = { prepare: (q) => stmt(q), batch: async (list) => { sql.exec('BEGIN'); try { for (const s of list) await s.run(); sql.exec('COMMIT'); } catch (e) { sql.exec('ROLLBACK'); throw e; } } };
+const CID = 'test.apps.googleusercontent.com', SITE = 'https://newformula.pages.dev';
+const genv = { GAME_DB, GOOGLE_CLIENT_ID: CID };
+const keyPair = async () => crypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign', 'verify']);
+const google = await keyPair(), stranger = await keyPair();
+const jwk = { ...(await crypto.subtle.exportKey('jwk', google.publicKey)), kid: 'k1', alg: 'RS256', use: 'sig' };
+const b64u = (x) => Buffer.from(x).toString('base64url');
+const idToken = async (claims, key = google.privateKey) => {
+  const h = b64u(JSON.stringify({ alg: 'RS256', kid: 'k1', typ: 'JWT' })), p = b64u(JSON.stringify(claims));
+  return h + '.' + p + '.' + b64u(await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, Buffer.from(h + '.' + p)));
+};
+const realFetch = globalThis.fetch;
+globalThis.fetch = async (u) => (String(u) === 'https://www.googleapis.com/oauth2/v3/certs' ? new Response(JSON.stringify({ keys: [jwk] }), { headers: { 'Cache-Control': 'max-age=3600' } }) : realFetch(u));
+let clock = Date.parse('2026-11-26T03:00:00Z'); // 台灣時間 11/26 早上 11 點
+const day = () => { clock += 864e5; };
+const g = (path, { method = 'GET', cookie = '', body, origin, e = genv } = {}) => {
+  const headers = {};
+  if (cookie) headers.Cookie = cookie;
+  if (body) headers['Content-Type'] = 'application/json';
+  if (origin) headers.Origin = origin;
+  return handleGame(new Request(SITE + '/api/game/' + path, { method, headers, body: body && JSON.stringify(body) }), e, path, clock);
+};
+const gpost = (path, opts = {}) => g(path, { method: 'POST', body: {}, ...opts });
+const cookieOf = (res, name) => res.headers.getSetCookie().find((c) => c.startsWith(name + '='));
+// 還沒設定好：不顯示登入，也不能用
+assert.deepEqual(await (await g('me', { e: {} })).json(), { ready: false, logged: false });
+assert.equal((await g('auth/start', { e: { GAME_DB } })).status, 503);
+assert.deepEqual(await (await g('me')).json(), { ready: true, logged: false });
+// 1. 跳到 Google：只要名字，不要 email；回到 login.html
+async function start() {
+  const res = await g('auth/start');
+  assert.equal(res.status, 302);
+  const to = new URL(res.headers.get('Location'));
+  assert.equal(to.origin + to.pathname, 'https://accounts.google.com/o/oauth2/v2/auth');
+  assert.deepEqual([to.searchParams.get('client_id'), to.searchParams.get('redirect_uri'), to.searchParams.get('scope'), to.searchParams.get('response_type')], [CID, SITE + '/login.html', 'openid profile', 'id_token']);
+  const c = cookieOf(res, 'nf_oauth');
+  assert.match(c, /HttpOnly; Secure; SameSite=Lax/);
+  return { state: to.searchParams.get('state'), nonce: to.searchParams.get('nonce'), cookie: c.split(';')[0] };
+}
+const claims = (s, extra = {}) => ({ iss: 'https://accounts.google.com', aud: CID, sub: '1234567890', given_name: '<小明>', exp: clock / 1000 + 3600, iat: clock / 1000, nonce: s.nonce, ...extra });
+const glogin = async (s, token) => gpost('login', { cookie: s.cookie, body: { id_token: token, state: s.state } });
+let s = await start();
+assert.equal((await gpost('login', { cookie: s.cookie, body: { id_token: await idToken(claims(s)), state: 'f'.repeat(32) } })).status, 400); // 暗號不對
+assert.equal((await gpost('login', { body: { id_token: await idToken(claims(s)), state: s.state } })).status, 400); // 沒有從自己網站開始登入
+assert.equal((await glogin(s, await idToken(claims(s, { aud: 'other' })))).status, 401); // 給別的網站的證明
+assert.equal((await glogin(s, await idToken(claims(s, { nonce: 'x' })))).status, 401); // 被偷來重送的證明
+assert.equal((await glogin(s, await idToken(claims(s, { exp: clock / 1000 - 3600 })))).status, 401); // 過期
+assert.equal((await glogin(s, await idToken(claims(s), stranger.privateKey))).status, 401); // 不是 Google 簽的
+assert.equal((await glogin(s, await idToken(claims(s, { iss: 'https://evil.test' })))).status, 401);
+assert.equal((await glogin(s, 'not.a.token')).status, 401);
+// 2. 第一次登入：送 1,000 金幣
+let res = await glogin(s, await idToken(claims(s)));
+assert.equal(res.status, 200);
+let me = await res.json();
+assert.deepEqual([me.isNew, me.coins, me.name, me.gift.pos, me.gift.claimed, me.relief.available], [true, 1000, '小明', 0, false, false]);
+assert.match(cookieOf(res, 'nf_game'), /^nf_game=[0-9a-f]{64}; Path=\/; Max-Age=\d+; HttpOnly; Secure; SameSite=Lax$/);
+const who = cookieOf(res, 'nf_game').split(';')[0];
+assert.equal(sql.prepare('SELECT COUNT(*) n FROM sessions').get().n, 1);
+assert.doesNotMatch(JSON.stringify(sql.prepare('SELECT * FROM players').all()), /@|email/); // 不存 email
+// 再登入一次：不會再送
+s = await start();
+me = await (await glogin(s, await idToken(claims(s)))).json();
+assert.deepEqual([me.isNew, me.coins], [false, 1000]);
+assert.equal((await g('me', { cookie: who })).status, 200);
+assert.equal((await (await g('me', { cookie: who })).json()).logged, true);
+assert.equal((await (await g('me', { cookie: 'nf_game=' + 'a'.repeat(64) })).json()).logged, false);
+// 3. 每日禮包：一天一次；漏領不會重來；7 天一輪
+assert.equal((await gpost('gift')).status, 401);
+assert.equal((await gpost('gift', { cookie: who, origin: 'https://evil.test' })).status, 403);
+const both = await Promise.all([gpost('gift', { cookie: who }), gpost('gift', { cookie: who })]); // 同時按兩次
+assert.deepEqual(both.map((r) => r.status).sort(), [200, 409]);
+me = await (await g('me', { cookie: who })).json();
+assert.deepEqual([me.coins, me.gift.pos, me.gift.claimed, me.gift.count], [1100, 1, true, 1]);
+clock = Date.parse('2026-11-26T15:59:00Z'); // 台灣 23:59，還是同一天
+assert.equal((await gpost('gift', { cookie: who })).status, 409);
+clock = Date.parse('2026-11-26T16:00:00Z'); // 台灣半夜 12 點換日
+assert.equal(twDay(clock), '2026-11-27');
+day(); day(); // 隔了 3 天才回來
+me = await (await gpost('gift', { cookie: who })).json();
+assert.deepEqual([me.amount, me.day, me.coins], [150, 2, 1250]);
+for (const want of GIFTS.slice(2)) { day(); me = await (await gpost('gift', { cookie: who })).json(); assert.equal(me.amount, want); }
+assert.deepEqual([me.coins, me.gift.pos, me.gift.count, me.gift.claimed], [1250 + 200 + 250 + 300 + 400 + 1000, 0, 7, true]);
+day();
+assert.equal((await (await gpost('gift', { cookie: who })).json()).amount, 100); // 新的一輪
+// 4. 救濟金：金幣夠的時候拿不到；不到 100 才有，補到 500，一天一次
+assert.equal((await gpost('relief', { cookie: who })).status, 409);
+const lose = (n) => { const p = sql.prepare("UPDATE players SET coins = coins - ? WHERE id = 'g:1234567890' RETURNING coins").get(n); sql.prepare("INSERT INTO coin_log (player_id, delta, balance, reason, at) VALUES ('g:1234567890', ?, ?, 'test-lose', 0)").run(-n, p.coins); };
+lose(me.coins - 30 + 100);
+me = await (await g('me', { cookie: who })).json();
+assert.deepEqual([me.coins, me.relief.available], [30, true]);
+const twice = await Promise.all([gpost('relief', { cookie: who }), gpost('relief', { cookie: who })]);
+assert.deepEqual(twice.map((r) => r.status).sort(), [200, 409]);
+me = await (await g('me', { cookie: who })).json();
+assert.deepEqual([me.coins, me.relief.available, me.relief.usedToday], [500, false, true]);
+lose(500);
+assert.equal((await gpost('relief', { cookie: who })).status, 409); // 今天領過了
+day();
+me = await (await gpost('relief', { cookie: who })).json();
+assert.deepEqual([me.amount, me.coins], [500, 500]);
+// 金幣進出紀錄對得起來
+const sum = sql.prepare("SELECT SUM(delta) s FROM coin_log WHERE player_id = 'g:1234567890'").get().s;
+assert.equal(sum, me.coins);
+// 5. 登出：這個瀏覽器的登入失效
+assert.match(cookieOf(await gpost('logout', { cookie: who }), 'nf_game'), /Max-Age=0/);
+assert.equal((await (await g('me', { cookie: who })).json()).logged, false);
+assert.deepEqual([cleanName(''), cleanName('  A\u0000b  c  '), cleanName('一二三四五六七八九十一二三四')], ['玩家', 'Ab c', '一二三四五六七八九十一二']);
+globalThis.fetch = realFetch;
+console.log('PASS 私人下載、清單解析、手動編輯錯誤、線上更新清單、GitHub 發布、版本比較、來源故障、遊戲帳號（登入、禮包、救濟金）');

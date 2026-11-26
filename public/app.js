@@ -1,5 +1,6 @@
 import { parseTools, mergeTool, formatSize, fileUrl } from './tools-core.js?v=44e1fcfb';
-import { ALL, HEAVY } from './font-chars.js?v=e51e91bf';
+import { ALL, HEAVY } from './font-chars.js?v=462d23d6';
+import { initAccount, accountMode } from './account.js?v=badddb90';
 
 const $ = (id) => document.getElementById(id);
 const SVG = 'http://www.w3.org/2000/svg';
@@ -198,7 +199,7 @@ const frame = () => new Promise((r) => requestAnimationFrame(r));
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 let sheetTurn = 0; // 每次開關加一，中途反悔時舊的動作就失效
 function lockPage(on) {
-  [$('top'), $('mode-bar'), $('rack'), $('intro'), $('intro-games')].forEach((e) => { if (e) e.inert = on; });
+  [$('top'), $('mode-bar'), $('player'), $('rack'), $('intro'), $('intro-games')].forEach((e) => { if (e) e.inert = on; });
   sheetPanel.inert = phone.matches && !on; // 手機關著時先放在畫面外備好，但不能操作
   if (on) { sheetPanel.setAttribute('role', 'dialog'); sheetPanel.setAttribute('aria-modal', 'true'); } else { sheetPanel.removeAttribute('role'); sheetPanel.removeAttribute('aria-modal'); }
 }
@@ -263,7 +264,7 @@ veil.addEventListener('touchmove', (e) => { if (e.cancelable) e.preventDefault()
 // 小人只在看得到的時候動
 if ('IntersectionObserver' in window) for (const art of [$('art'), $('art-games')]) if (art) new IntersectionObserver(([e]) => art.classList.toggle('still', e.intersectionRatio < 0.5), { threshold: [0, 0.5] }).observe(art);
 
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('unlock').open) { closeSheet(); deselect(); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !document.querySelector('dialog[open]')) { closeSheet(); deselect(); } });
 phone.addEventListener('change', () => { closeSheet(); drawRack(); if (phone.matches) deselect(); else showPanel(); lockPage(false); });
 $('home').onclick = (e) => {
   e.preventDefault();
@@ -317,6 +318,7 @@ function updateModeUI() {
   $('rack')?.setAttribute('aria-label', mode === 'games' ? '遊戲欄位' : '工具欄位');
   if ($('cnt-tools')) $('cnt-tools').textContent = pad(pub.length + priv.length);
   if ($('cnt-games')) $('cnt-games').textContent = pad(games.length);
+  accountMode(mode === 'games'); // 遊戲區的金幣、禮包、救濟金
 }
 function switchMode(next, { keepId = '', updateHash = true } = {}) {
   const target = next === 'games' && games.length ? 'games' : 'tools';
@@ -423,6 +425,7 @@ function redraw(keepId) {
 }
 async function start() {
   // 所有清單同時讀，不用一個等一個
+  initAccount();
   const releasesReady = getJson('releases.json'), liveReady = getJson('/api/live');
   const gamesReady = fetch('games.txt').then((r) => (r.ok ? r.text() : '')).catch(() => '');
   let parsedTools = [];

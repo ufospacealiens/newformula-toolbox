@@ -31,6 +31,19 @@
 - 要公開某個軟體：**EXE 不用搬**。把它那一段從私人 `tools.txt` 移到公開的 `tools.txt`（保留「檔案」那一行），就不用密碼也能下載；再把名字從 `test.mjs` 的「私人軟體不能出現在公開的檔案裡」那行拿掉
 - 解鎖一次 30 天有效；同一個 IP 打錯 5 次要等 10 分鐘
 
+## 遊戲區帳號（登入、金幣、每日禮包、救濟金）
+
+只在「遊戲區」分頁出現。用 Google 帳號登入，只記名字，不記 email；不需要任何密碼或金鑰。
+
+- 規則（使用者 2026-11-26 決定）：新帳號 1,000 金幣，所有遊戲共用；不能儲值、不能換錢、玩家之間不能送金幣。
+  - 每日禮包 7 天一輪：100、150、200、250、300、400、1,000；漏領不會重來，台灣時間半夜 12 點換日。
+  - 救濟金平常看不到：金幣不到 100 才出現，補到 500，每天一次。
+- 金幣存在 Cloudflare D1 資料庫 `newformula-game`（表格見 `schema/game.sql`），每一筆進出都記在 `coin_log`。
+- Cloudflare → Workers & Pages → newformula → 設定 → 繫結（正式版和預覽版都要）：D1 資料庫，變數名稱 `GAME_DB`。
+- Google 登入的「用戶端 ID」寫在 `lib/game-server.js` 的 `CLIENT_ID`（會出現在登入網址裡，不是密碼）。Google Cloud 的 OAuth 用戶端要加入每個網址的 `/login.html`，例如 `https://newformula.pages.dev/login.html`、`https://v1.newformula.pages.dev/login.html`。
+- 還沒設定好資料庫或用戶端 ID 時，登入那一條不會顯示，網站其他部分照常。
+- 其他遊戲（例如吹牛骰子）要用同一個 `newformula-game` 資料庫，玩家用 `g:` 加 Google 帳號編號辨認，才會是同一個錢包。
+
 ## 換一台電腦或手機操作
 
 什麼都不用安裝，用瀏覽器登入 GitHub 帳號 `ufospacealiens` 就可以。
@@ -69,6 +82,9 @@
 | `scripts/build-fonts.mjs`、`scripts/stamp.mjs` | 產生精簡字型、更新快取代碼 |
 | `functions/api/live.js` | 讀軟體的線上更新清單 |
 | `functions/api/private/[[path]].js` | 私人下載：檢查密碼、給清單和檔案 |
+| `lib/game-server.js`、`functions/api/game/[[path]].js` | 遊戲區帳號：Google 登入、金幣、每日禮包、救濟金 |
+| `public/account.js`、`public/login.html`、`public/login.js` | 遊戲區帳號的畫面和動畫、Google 登入完回來的那一頁 |
+| `schema/game.sql` | 遊戲帳號資料庫的表格 |
 | `.github/workflows/releases.yml` | Releases 有變動時更新 `releases.json` |
 
 作者：新配方

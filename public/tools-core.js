@@ -46,6 +46,11 @@ export function parseTools(text) {
   }));
 }
 
+// 放在 R2 私人空間的檔案的下載網址（公開或私人都走這裡，公開時檔案不用搬）
+export function fileUrl(file) {
+  return '/api/private/file/' + String(file).split('/').map(encodeURIComponent).join('/');
+}
+
 export function safeUrl(value) {
   try { const u = new URL(value); return u.protocol === 'https:' ? u.href : ''; } catch { return ''; }
 }

@@ -1,4 +1,4 @@
-import { parseTools, mergeTool, formatSize } from './tools-core.js?v=a406a334';
+import { parseTools, mergeTool, formatSize, fileUrl } from './tools-core.js?v=6e530706';
 import { ALL, HEAVY } from './font-chars.js?v=1091eecd';
 
 const $ = (id) => document.getElementById(id);
@@ -395,7 +395,8 @@ async function start() {
   }
   $('panel').hidden = false;
   const releases = await releasesReady;
-  pub = tools.map((t) => mergeTool(t, t.release && releases[t.release]));
+  // 「檔案」放在私人空間、但已經公開的軟體，直接從那裡下載
+  pub = tools.map((t) => mergeTool(t.file && !t.url ? { ...t, url: fileUrl(t.file) } : t, t.release && releases[t.release]));
   tools = [...pub, ...priv];
   redraw(location.hash.slice(1));
   if (!document.body.classList.contains('sheet-ready')) lockPage(false);

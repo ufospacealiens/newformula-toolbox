@@ -1,5 +1,5 @@
 // 在程式和樣式的網址後面加上內容代碼（?v=…），瀏覽器就能放心快取，內容一改就抓新的。
-// 改過 app.js、styles.css、tools-core.js、font-chars.js 之後執行：node scripts/stamp.mjs
+// 改過 app.js、account.js、styles.css、tools-core.js、font-chars.js 之後執行：node scripts/stamp.mjs
 // 只檢查：node scripts/stamp.mjs --check
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
@@ -11,7 +11,7 @@ const stamp = (text, file, v) => text.replace(new RegExp(file.replaceAll('.', '\
 
 let app = load('app.js'), html = load('index.html');
 const before = app + html;
-for (const f of ['tools-core.js', 'font-chars.js']) { const v = ver(load(f)); app = stamp(app, f, v); html = stamp(html, f, v); }
+for (const f of ['tools-core.js', 'font-chars.js', 'account.js']) { const v = ver(load(f)); app = stamp(app, f, v); html = stamp(html, f, v); }
 html = stamp(html, 'app.js', ver(app));
 html = stamp(html, 'styles.css', ver(load('styles.css')));
 const same = before === app + html;

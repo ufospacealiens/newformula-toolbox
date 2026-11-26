@@ -14,12 +14,12 @@ const ascii = Array.from({ length: 94 }, (_, i) => String.fromCharCode(33 + i)).
 const html = read('index.html'), tools = parseTools(read('tools.txt'));
 const games = fs.existsSync(new URL('games.txt', PUB)) ? parseTools(read('games.txt')) : [];
 const body = html.slice(html.indexOf('<!--PAGE-->')).replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, '');
-const code = read('app.js').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\s\/\/ .*$/gm, '');
+const code = (read('app.js') + read('account.js')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\s\/\/ .*$/gm, '');
 const names = [...tools, ...games].map((t) => t.name).join('');
 let notes = '';
 try { notes = JSON.stringify(await (await fetch('https://newformula.pages.dev/api/live')).json()); } catch { console.log('讀不到更新內容，略過'); }
 const all = uniq(ascii + body + code.replace(/[\x00-\x7f]/g, '') + [...tools, ...games].map((t) => Object.values(t).join('')).join('') + read('releases.json') + notes + '　，。、；：「」（）％');
-const heavy = uniq(ascii + '新配方的工具箱新配方的遊戲區工具箱遊戲區' + (html.match(/<h2 id="intro-title">([^<]+)/)?.[1] || '') + (html.match(/<h2 id="intro-games-title">([^<]+)/)?.[1] || '') + names + '％');
+const heavy = uniq(ascii + '新配方的工具箱新配方的遊戲區工具箱遊戲區' + (html.match(/<h2 id="intro-title">([^<]+)/)?.[1] || '') + (html.match(/<h2 id="intro-games-title">([^<]+)/)?.[1] || '') + [...html.matchAll(/<h2[^>]*>([^<]+)/g)].map((m) => m[1]).join('') + '已領救濟金' + names + '％');
 
 const jobs = [
   ['sans-400', 'Noto+Sans+TC:wght@400', all, 'NF Sans', 400], ['sans-500', 'Noto+Sans+TC:wght@500', all, 'NF Sans', 500], ['sans-900', 'Noto+Sans+TC:wght@900', heavy, 'NF Sans', 900],

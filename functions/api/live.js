@@ -1,11 +1,15 @@
 // 讀取各軟體的線上更新清單，讓官網的版本、大小、下載網址跟著更新。
 // 有問題的來源會略過，網站就顯示 tools.txt 裡的資料。
-import { parseTools, readManifest } from '../../public/tools-core.js';
+import { parseTools, readManifest, fileUrl } from '../../public/tools-core.js';
 
 export async function onRequestGet({ request, env }) {
   const list = await env.ASSETS.fetch(new URL('/tools.txt', request.url));
-  const tools = parseTools(await list.text()).filter((t) => t.source);
+  const all = parseTools(await list.text()), tools = all.filter((t) => t.source);
   const live = {};
+  // 從私人空間公開的檔案：大小直接讀檔案
+  if (env.PRIVATE) await Promise.all(all.filter((t) => t.file).map(async (t) => {
+    try { const head = await env.PRIVATE.head(t.file); if (head) live[t.id] = { url: fileUrl(t.file), size: head.size }; } catch { /* 讀不到就用 tools.txt 的資料 */ }
+  }));
   await Promise.all(tools.map(async (t) => {
     try {
       const res = await fetch(t.source, { cf: { cacheTtl: 300, cacheEverything: true }, signal: AbortSignal.timeout(6000) });

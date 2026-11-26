@@ -137,13 +137,13 @@ const cookieOf = (res, name) => res.headers.getSetCookie().find((c) => c.startsW
 assert.deepEqual(await (await g('me', { e: {} })).json(), { ready: false, logged: false });
 assert.equal((await g('auth/start', { e: { GAME_DB } })).status, 503);
 assert.deepEqual(await (await g('me')).json(), { ready: true, logged: false });
-// 1. 跳到 Google：只要名字，不要 email；回到 login.html
+// 1. 跳到 Google：只要名字，不要 email；回到 /login
 async function start() {
   const res = await g('auth/start');
   assert.equal(res.status, 302);
   const to = new URL(res.headers.get('Location'));
   assert.equal(to.origin + to.pathname, 'https://accounts.google.com/o/oauth2/v2/auth');
-  assert.deepEqual([to.searchParams.get('client_id'), to.searchParams.get('redirect_uri'), to.searchParams.get('scope'), to.searchParams.get('response_type')], [CID, SITE + '/login.html', 'openid profile', 'id_token']);
+  assert.deepEqual([to.searchParams.get('client_id'), to.searchParams.get('redirect_uri'), to.searchParams.get('scope'), to.searchParams.get('response_type')], [CID, SITE + '/login', 'openid profile', 'id_token']);
   const c = cookieOf(res, 'nf_oauth');
   assert.match(c, /HttpOnly; Secure; SameSite=Lax/);
   return { state: to.searchParams.get('state'), nonce: to.searchParams.get('nonce'), cookie: c.split(';')[0] };

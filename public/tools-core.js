@@ -41,8 +41,8 @@ export function parseTools(text) {
     url: safeUrl(t.url),
     source: safeUrl(t.source),
     icon: /^[\w.-]+$/.test(t.icon || '') ? t.icon : '',
-    // 私人下載的檔案位置，例如 app/App.exe
-    file: /^[\w-]+(\/[\w.-]+)+$/.test(t.file || '') && !t.file.includes('..') ? t.file : '',
+    // 私人下載的檔名，例如 App.exe（也可以放資料夾：app/App.exe）
+    file: /^\w[\w.-]*(\/\w[\w.-]*)*$/.test(t.file || '') && !t.file.includes('..') ? t.file : '',
   }));
 }
 

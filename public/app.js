@@ -1,4 +1,4 @@
-import { parseTools, mergeTool, formatSize } from './tools-core.js?v=5a0938a9';
+import { parseTools, mergeTool, formatSize } from './tools-core.js?v=a406a334';
 import { ALL, HEAVY } from './font-chars.js?v=1091eecd';
 
 const $ = (id) => document.getElementById(id);

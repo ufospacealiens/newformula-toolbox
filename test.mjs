@@ -55,7 +55,7 @@ const store = new Map([['tools.txt', '代號：mic\n名稱：測試軟體\n檔�
 const bucket = { get: async (k) => store.has(k) ? { body: store.get(k), size: store.get(k).length, text: async () => store.get(k) } : null, head: async (k) => store.has(k) ? { size: store.get(k).length } : null };
 const env = { PRIVATE: bucket, PRIVATE_PASSWORD: 'correct horse' };
 const call = (path, init = {}, e = env) => privateApi({ request: new Request('https://site.test/api/private/' + path, init), env: e, params: { path: path.split('/') } });
-const post = (path, body, headers = {}) => call(path, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });
+const post = (path, body, headers = {}, e = env) => call(path, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) }, e);
 assert.equal((await call('list', {}, {})).status, 503);
 assert.equal((await call('list')).status, 401);
 assert.equal((await call('file/mic/a.exe')).status, 401);
@@ -76,6 +76,10 @@ assert.equal((await call('list', { headers: { Cookie: cookie.split(';')[0].repla
 assert.equal((await call('list', auth, { ...env, PRIVATE_PASSWORD: 'new password' })).status, 401); // 換密碼，舊的全部失效
 for (let i = 0; i < 5; i++) await post('login', { password: 'x' + i }, { 'CF-Connecting-IP': '9.9.9.9' });
 assert.equal((await post('login', { password: 'correct horse' }, { 'CF-Connecting-IP': '9.9.9.9' })).status, 429);
+// 設定或輸入時多了換行、空白，或用了全形數字，都要能解鎖
+assert.equal((await post('login', { password: '１２３４' }, { 'CF-Connecting-IP': '8.8.8.8' }, { ...env, PRIVATE_PASSWORD: '1234\n' })).status, 200);
+assert.equal((await post('login', { password: ' 1234 ' }, { 'CF-Connecting-IP': '8.8.8.8' }, { ...env, PRIVATE_PASSWORD: '1234' })).status, 200);
+assert.equal((await post('login', { password: '1235' }, { 'CF-Connecting-IP': '8.8.8.8' }, { ...env, PRIVATE_PASSWORD: '1234' })).status, 401);
 // 公開時檔案不用搬：寫進公開清單的檔案，不用密碼就能下載；私人的還是要密碼
 const pubEnv = { ...env, ASSETS: { fetch: async () => new Response('代號：b\n名稱：已公開\n檔案：b.exe') } };
 const pubFile = await call('file/b.exe', {}, pubEnv);

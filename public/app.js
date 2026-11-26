@@ -1,5 +1,5 @@
 import { parseTools, mergeTool, formatSize, fileUrl } from './tools-core.js?v=a0a8d81e';
-import { ALL, HEAVY } from './font-chars.js?v=e51e91bf';
+import { ALL, HEAVY } from './font-chars.js?v=ccdf5022';
 
 const $ = (id) => document.getElementById(id);
 const SVG = 'http://www.w3.org/2000/svg';

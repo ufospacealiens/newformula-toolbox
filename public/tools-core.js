@@ -35,7 +35,7 @@ export function parseTools(text) {
     return true;
   }).map((t, i) => ({
     ...t,
-    type: t.type === '網頁' ? '網頁' : '下載',
+    type: t.type === '網頁' || t.type === '遊戲' ? t.type : '下載',
     colorValue: COLORS[t.color] || FALLBACK_COLORS[i % FALLBACK_COLORS.length],
     size: /^\d+$/.test(t.size || '') ? Number(t.size) : null,
     url: safeUrl(t.url),

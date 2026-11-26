@@ -376,3 +376,17 @@ body:not(.is-games) .player { display: none; }
   .d-label { font-size: 12px; }
   .wallet { font-size: 17px; gap: 6px; padding: 0 9px 0 7px; }
 }
+
+/* 隱私權說明（privacy.html） */
+.doc-page { justify-content: flex-start; }
+.doc { width: min(680px, 100%); margin: 0 auto; padding: 28px 24px 32px; border: 3px solid var(--ink); border-radius: 12px; background: var(--plate); line-height: 1.8; }
+.doc h1 { font-size: 26px; font-weight: 900; }
+.doc h2 { margin-top: 26px; font-size: 18px; font-weight: 900; }
+.doc p, .doc ul { margin-top: 8px; }
+.doc ul { padding-left: 1.3em; }
+.doc li + li { margin-top: 6px; }
+.doc a { color: var(--blue); }
+.doc-back { margin: 0 0 14px; font-size: 15px; }
+.doc-date { color: var(--dim); font-size: 14px; }
+/* 這兩頁的字不在精簡字型裡，整頁用系統字，免得一個字一種字型 */
+.doc-page, .login-page { font-family: 'Microsoft JhengHei UI', 'PingFang TC', 'Noto Sans TC', sans-serif; }

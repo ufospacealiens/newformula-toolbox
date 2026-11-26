@@ -135,7 +135,7 @@ const gpost = (path, opts = {}) => g(path, { method: 'POST', body: {}, ...opts }
 const cookieOf = (res, name) => res.headers.getSetCookie().find((c) => c.startsWith(name + '='));
 // 還沒設定好：不顯示登入，也不能用
 assert.deepEqual(await (await g('me', { e: {} })).json(), { ready: false, logged: false });
-assert.equal((await g('auth/start', { e: { GAME_DB } })).status, 503);
+assert.equal((await g('auth/start', { e: {} })).status, 503); // 沒綁資料庫
 assert.deepEqual(await (await g('me')).json(), { ready: true, logged: false });
 // 1. 跳到 Google：只要名字，不要 email；回到 /login
 async function start() {

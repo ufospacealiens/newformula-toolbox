@@ -41,6 +41,7 @@
 - 金幣存在 Cloudflare D1 資料庫 `newformula-game`（表格見 `schema/game.sql`），每一筆進出都記在 `coin_log`。
 - Cloudflare → Workers & Pages → newformula → 設定 → 繫結（正式版和預覽版都要）：D1 資料庫，變數名稱 `GAME_DB`。
 - Google 登入的「用戶端 ID」寫在 `lib/game-server.js` 的 `CLIENT_ID`（會出現在登入網址裡，不是密碼）。Google Cloud 的 OAuth 用戶端「已授權的重新導向 URI」要加入每個網址的 `/login`，例如 `https://newformula.pages.dev/login`、`https://v1.newformula.pages.dev/login`（Cloudflare 會把 `/login.html` 自動改成 `/login`）。
+- Google 登入設定在 Google Cloud 專案 `newformula-game` → Google Auth Platform（應用程式名稱「新配方的遊戲區」，用戶端「新配方官網」）。品牌頁的隱私權政策連結是 `https://newformula.pages.dev/privacy`（`public/privacy.html`），改登入要記的資料時要一起改這一頁。
 - 還沒設定好資料庫或用戶端 ID 時，登入那一條不會顯示，網站其他部分照常。
 - 其他遊戲（例如吹牛骰子）要用同一個 `newformula-game` 資料庫，玩家用 `g:` 加 Google 帳號編號辨認，才會是同一個錢包。
 

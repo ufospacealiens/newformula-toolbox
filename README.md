@@ -21,8 +21,8 @@
 **私人軟體不能放進這個儲存庫或 GitHub Releases**（都是公開的），名稱也不能寫進公開的 `tools.txt`。
 
 - 檔案和清單放在 Cloudflare R2 的私人儲存空間 `newformula-private`（不要開公開網址）：
-  - `tools.txt`：私人軟體清單，格式和公開的一樣，多一個「檔案：資料夾/檔名.exe」；大小會自動讀檔案
-  - 各軟體的 EXE，例如 `app/App.exe`
+  - `tools.txt`：私人軟體清單，格式和公開的一樣，多一個「檔案：檔名.exe」；大小會自動讀檔案
+  - 各軟體的 EXE，直接放最上層，例如 `App.exe`
 - Cloudflare → Workers & Pages → newformula → 設定（正式版和預覽版都要）：
   - 綁定 R2 儲存空間，變數名稱 `PRIVATE`
   - 機密變數 `PRIVATE_PASSWORD`：密碼，只有本人設定。換密碼後所有人都要重新輸入

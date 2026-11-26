@@ -51,7 +51,7 @@ assert.deepEqual(await run(async () => new Response('not json')), {});
 assert.deepEqual(await run(async () => new Response('', { status: 500 })), {});
 assert.deepEqual(await run(async () => { throw new Error('timeout'); }), {});
 // 私人下載：沒密碼看不到清單、拿不到檔案；檔案只給清單上有的
-const store = new Map([['tools.txt', '代號：mic\n名稱：測試軟體\n檔案：mic/a.exe\n\n代號：x\n名稱：壞路徑\n檔案：../secret'], ['mic/a.exe', 'EXE'], ['other.exe', 'NO']]);
+const store = new Map([['tools.txt', '代號：mic\n名稱：測試軟體\n檔案：mic/a.exe\n\n代號：x\n名稱：壞路徑\n檔案：../secret\n\n代號：y\n名稱：最上層\n檔案：b.exe'],['mic/a.exe', 'EXE'], ['b.exe', 'B'], ['other.exe', 'NO']]);
 const bucket = { get: async (k) => store.has(k) ? { body: store.get(k), size: store.get(k).length, text: async () => store.get(k) } : null, head: async (k) => store.has(k) ? { size: store.get(k).length } : null };
 const env = { PRIVATE: bucket, PRIVATE_PASSWORD: 'correct horse' };
 const call = (path, init = {}, e = env) => privateApi({ request: new Request('https://site.test/api/private/' + path, init), env: e, params: { path: path.split('/') } });
@@ -66,7 +66,7 @@ assert.equal(login.status, 200);
 const cookie = login.headers.get('Set-Cookie');
 assert.match(cookie, /HttpOnly; Secure; SameSite=Strict/);
 const listed = (await login.json()).tools;
-assert.deepEqual(listed.map((t) => [t.id, t.url, t.size]), [['mic', '/api/private/file/mic/a.exe', 3], ['x', '', null]]);
+assert.deepEqual(listed.map((t) => [t.id, t.url, t.size]), [['mic', '/api/private/file/mic/a.exe', 3], ['x', '', null], ['y', '/api/private/file/b.exe', 1]]);
 const auth = { headers: { Cookie: cookie.split(';')[0] } };
 assert.equal((await call('list', auth)).status, 200);
 const file = await call('file/mic/a.exe', auth);

@@ -12,17 +12,18 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="site.webmanifest">
-<link rel="stylesheet" href="styles.css?v=15551ff0">
+<link rel="stylesheet" href="styles.css?v=b1d50e86">
 <!-- 要用的東西一起下載，不用一個等一個 -->
 <!--FONTS-->
-<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/sans-400.dc161160.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/sans-500.505d9ef4.woff2">
-<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/sans-900.12b8cb1e.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/sans-400.2c1795d2.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/sans-500.d73397fe.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="fonts/sans-900.57c20d4a.woff2">
 <!--/FONTS-->
-<link rel="modulepreload" href="app.js?v=36ecb508">
-<link rel="modulepreload" href="tools-core.js?v=6e530706">
-<link rel="modulepreload" href="font-chars.js?v=1091eecd">
+<link rel="modulepreload" href="app.js?v=7b300be9">
+<link rel="modulepreload" href="tools-core.js?v=a0a8d81e">
+<link rel="modulepreload" href="font-chars.js?v=ccdf5022">
 <link rel="preload" as="fetch" crossorigin href="tools.txt">
+<link rel="preload" as="fetch" crossorigin href="games.txt">
 <link rel="preload" as="fetch" crossorigin href="releases.json">
 <link rel="preload" as="fetch" crossorigin href="/api/live">
 </head>
@@ -32,6 +33,8 @@
   <symbol id="ball" viewBox="0 0 44 44"><g transform="rotate(-14 22 22)"><circle cx="22" cy="22" r="20" fill="#25231F"/><circle cx="22" cy="22" r="17.5" fill="currentColor"/><path d="M4.500 22a17.500 17.500 0 0 0 35 0z" fill="#25231F" fill-opacity=".3"/><path d="M4.500 22h35" stroke="#F4F0E4" stroke-width="3.500"/><ellipse cx="14" cy="13" rx="4.500" ry="3.200" fill="#fff" transform="rotate(-38 14 13)"/><path d="M22 13.500l7.400 4.250v8.500L22 30.500l-7.400-4.250v-8.500z" fill="#F4F0E4" stroke="#25231F" stroke-width="2.500" stroke-linejoin="round"/><circle cx="22" cy="22" r="3.600" fill="#25231F"/></g></symbol>
   <symbol id="k-download" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2.400"/><path d="M8 21h8M12 17v4M12 6v6.500m0 0l-2.800-2.800m2.800 2.800l2.800-2.800" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="k-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.500" fill="none" stroke="currentColor" stroke-width="2.400"/><path d="M2.500 12h19M12 2.500c3 2.700 4.200 5.800 4.200 9.500S15 18.800 12 21.500c-3-2.700-4.200-5.800-4.200-9.500S9 5.200 12 2.500z" fill="none" stroke="currentColor" stroke-width="2.200"/></symbol>
+  <symbol id="k-game" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2.200"/><circle cx="8.500" cy="8.500" r="1.700" fill="currentColor"/><circle cx="15.500" cy="8.500" r="1.700" fill="currentColor"/><circle cx="8.500" cy="15.500" r="1.700" fill="currentColor"/><circle cx="15.500" cy="15.500" r="1.700" fill="currentColor"/></symbol>
+  <symbol id="m-tools" viewBox="0 0 24 24"><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2.200"/><rect x="3" y="7" width="18" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="2.200"/><path d="M3 12h18" fill="none" stroke="currentColor" stroke-width="2.200"/></symbol>
   <symbol id="k-lock" viewBox="0 0 24 24"><rect x="4" y="10.500" width="16" height="11" rx="2.500" fill="currentColor"/><path d="M8 10.500v-3a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.400"/></symbol>
   <symbol id="k-unlock" viewBox="0 0 24 24"><rect x="4" y="10.500" width="16" height="11" rx="2.500" fill="currentColor"/><path d="M8 10.500v-3a4 4 0 0 1 7.700-1.500" fill="none" stroke="currentColor" stroke-width="2.400" stroke-linecap="round"/></symbol>
   <symbol id="ball-empty" viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" fill="none" stroke="#A79F8D" stroke-width="2.500" stroke-dasharray="4 4"/></symbol>
@@ -57,6 +60,22 @@
   <div class="count" id="count" role="img" aria-label="已收納的工具"><div class="balls" id="balls"></div><span class="num" id="num"></span></div>
 </header>
 
+<nav class="mode-bar" id="mode-bar" aria-label="切換分區">
+  <div class="mode-switch" role="tablist" aria-label="新配方分區">
+    <button class="mode-btn" id="tab-tools" type="button" role="tab" aria-selected="true" data-mode="tools">
+      <svg aria-hidden="true"><use href="#m-tools"/></svg>
+      <span>工具箱</span>
+      <span class="mode-cnt" id="cnt-tools">00</span>
+    </button>
+    <button class="mode-btn" id="tab-games" type="button" role="tab" aria-selected="false" data-mode="games">
+      <svg aria-hidden="true"><use href="#k-game"/></svg>
+      <span>遊戲區</span>
+      <span class="mode-cnt" id="cnt-games">00</span>
+      <span class="mode-new">NEW</span>
+    </button>
+  </div>
+</nav>
+
 <main class="bench">
   <h1 class="sr">新配方的工具箱</h1>
   <section class="rack" id="rack" aria-label="工具欄位"></section>
@@ -67,6 +86,11 @@
     <p><span>我只是一個平凡人</span><span>AI 誕生後，我學會用各種工具</span><span>解決生活中的不便</span></p>
     <p><span>以前要做到這些，得靠一個團隊</span><span>現在有了 AI，一個人就夠了</span></p>
     <p><span>這個工具箱，會繼續裝進更多軟體</span></p>
+  </section>
+  <section class="intro intro-games" id="intro-games" aria-labelledby="intro-games-title">
+    <div class="intro-art" aria-hidden="true"><svg viewBox="0 0 77 20" shape-rendering="crispEdges"><path d="M12 4h11v1h-11zM11 5h1v10h-1zM23 5h1v10h-1zM12 15h11v1h-11zM14 7h2v2h-2zM19 7h2v2h-2zM16 9h3v2h-3zM14 11h2v2h-2zM19 11h2v2h-2zM33 9h5v2h-5zM45 6h11v1h-11zM44 7h1v8h-1zM56 7h1v8h-1zM45 15h11v1h-11zM47 9h2v2h-2zM52 11h2v2h-2zM62 8h2v2h-2zM66 5h2v2h-2zM65 11h3v2h-3z"/></svg></div>
+    <h2 id="intro-games-title">新配方的遊戲區</h2>
+    <p><span>打開網頁就能跟朋友連線開局</span><span>不用下載安裝，手機電腦都順手</span><span>這個遊戲區，會陸續加入更多小遊戲</span></p>
   </section>
   <!-- /介紹 -->
   <div class="veil" id="veil"></div>
@@ -98,6 +122,6 @@
 <footer class="foot"><a class="author" href="https://www.youtube.com/@%E6%96%B0%E9%85%8D%E6%96%B9" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="4.500" fill="#C93A10"/><path d="M10 8.500v7l6-3.500z" fill="#fff"/></svg><span>作者：<b>新配方</b></span><span class="sr">，開啟 YouTube 頻道</span></a><button class="lock" id="lock" type="button" aria-haspopup="dialog" title="私人下載"><svg aria-hidden="true"><use href="#k-lock"/></svg><span class="sr">私人下載</span></button><span class="grille" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span></footer>
 <noscript><p class="foot">這個網站需要開啟 JavaScript 才能顯示工具。</p></noscript>
 <!--/PAGE-->
-<script type="module" src="app.js?v=36ecb508"></script>
+<script type="module" src="app.js?v=7b300be9"></script>
 </body>
 </html>

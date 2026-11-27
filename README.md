@@ -36,13 +36,14 @@
 只在「遊戲區」分頁出現。用 Google 帳號登入，只記名字，不記 email；不需要任何密碼或金鑰。
 
 - 規則（使用者 2026-11-26 決定）：新帳號 1,000 金幣，所有遊戲共用；不能儲值、不能換錢、玩家之間不能送金幣。
-  - 每日禮包 7 天一輪：100、150、200、250、300、400、1,000；漏領不會重來，台灣時間半夜 12 點換日。
+  - 每日禮包 7 天一輪：100、150、200、250、300、400、1,000；漏領不會重來，台灣時間半夜 12 點換日。登入的人進到遊戲區（或打開吹牛骰子首頁）就自動領，不用按；見面禮也自動打開。
   - 救濟金平常看不到：金幣不到 100 才出現，補到 500，每天一次。
 - 金幣存在 Cloudflare D1 資料庫 `newformula-game`（表格見 `schema/game.sql`），每一筆進出都記在 `coin_log`。
 - Cloudflare → Workers & Pages → newformula → 設定 → 繫結（正式版和預覽版都要）：D1 資料庫，變數名稱 `GAME_DB`。
 - Google 登入的「用戶端 ID」寫在 `lib/game-server.js` 的 `CLIENT_ID`（會出現在登入網址裡，不是密碼）。Google Cloud 的 OAuth 用戶端「已授權的重新導向 URI」要加入每個網址的 `/login`，例如 `https://newformula.pages.dev/login`、`https://v1.newformula.pages.dev/login`（Cloudflare 會把 `/login.html` 自動改成 `/login`）。
 - Google 登入設定在 Google Cloud 專案 `newformula-game` → Google Auth Platform（應用程式名稱「新配方的遊戲區」，用戶端「新配方官網」）。品牌頁的隱私權政策連結是 `https://newformula.pages.dev/privacy`（`public/privacy.html`），改登入要記的資料時要一起改這一頁。
 - 還沒設定好資料庫或用戶端 ID 時，登入那一條不會顯示，網站其他部分照常。
+- **帳號只登一次**：官網是登入中心。遊戲區的「開始遊玩」和遊戲裡的「登入」都經過 `/api/game/pass?to=遊戲代號`：官網已登入就發一張 1 分鐘、只能用一次的通行證（表格 `tickets`）帶到遊戲的 `/api/game/ticket`；還沒登入就先 Google 登入再帶過去。可以帶過去的遊戲網址寫在 `lib/game-server.js` 的 `GAMES`，遊戲代號也要加進 `public/account.js` 的 `PASS_GAMES`。登入狀態 60 天，剩不到 30 天時有回來就自動延長。
 - 其他遊戲（例如吹牛骰子）要用同一個 `newformula-game` 資料庫，玩家用 `g:` 加 Google 帳號編號辨認，才會是同一個錢包。
 
 ## 換一台電腦或手機操作

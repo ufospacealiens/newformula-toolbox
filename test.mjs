@@ -129,7 +129,7 @@ const g = (path, { method = 'GET', cookie = '', body, origin, e = genv } = {}) =
   if (cookie) headers.Cookie = cookie;
   if (body) headers['Content-Type'] = 'application/json';
   if (origin) headers.Origin = origin;
-  return handleGame(new Request(SITE + '/api/game/' + path, { method, headers, body: body && JSON.stringify(body) }), e, path, clock);
+  return handleGame(new Request(SITE + '/api/game/' + path, { method, headers, body: body && JSON.stringify(body) }), e, path.split('?')[0], clock);
 };
 const gpost = (path, opts = {}) => g(path, { method: 'POST', body: {}, ...opts });
 const cookieOf = (res, name) => res.headers.getSetCookie().find((c) => c.startsWith(name + '='));
@@ -211,9 +211,58 @@ assert.deepEqual([me.amount, me.coins], [500, 500]);
 // 金幣進出紀錄對得起來
 const sum = sql.prepare("SELECT SUM(delta) s FROM coin_log WHERE player_id = 'g:1234567890'").get().s;
 assert.equal(sum, me.coins);
+// 6. 帳號只登一次：官網發通行證帶進遊戲；通行證 1 分鐘、只能用一次；登入狀態有回來就延長
+{
+  const LIAR = 'https://liar-dice.gametime-library-f5948618.workers.dev';
+  const atGame = (path) => handleGame(new Request(LIAR + '/api/game/' + path), genv, path.split('?')[0], clock);
+  const loc = (r) => r.headers.get('Location');
+  // 沒登入：先去登入，記住要回哪個遊戲、哪個房號
+  assert.equal(loc(await g('pass?to=liar-dice&r=1234')), '/api/game/auth/start?next=liar-dice&r=1234');
+  assert.equal(loc(await g('pass?to=evil&r=1234', { cookie: who })), '/#games'); // 不在名單上的網址不發
+  // 已登入：發通行證跳到遊戲
+  const passRes = await g('pass?to=liar-dice&r=1234', { cookie: who });
+  const to = new URL(loc(passRes));
+  assert.equal(to.origin + to.pathname, LIAR + '/api/game/ticket');
+  assert.equal(to.searchParams.get('r'), '1234');
+  const t = to.searchParams.get('t');
+  // 遊戲收下通行證：自己的登入狀態，同一個帳號、同一個錢包
+  const got = await atGame('ticket?t=' + t + '&r=1234');
+  assert.equal(loc(got), '/?r=1234');
+  const gameCookie = cookieOf(got, 'nf_game').split(';')[0];
+  const there = await (await handleGame(new Request(LIAR + '/api/game/me', { headers: { Cookie: gameCookie } }), genv, 'me', clock)).json();
+  const here = await (await g('me', { cookie: who })).json();
+  assert.deepEqual([there.logged, there.name, there.coins], [true, here.name, here.coins]);
+  // 同一張通行證不能再用；過期的也不行
+  assert.equal(cookieOf(await atGame('ticket?t=' + t), 'nf_game'), undefined);
+  const t2 = new URL(loc(await g('pass?to=liar-dice', { cookie: who }))).searchParams.get('t');
+  clock += 61e3;
+  assert.equal(cookieOf(await atGame('ticket?t=' + t2), 'nf_game'), undefined);
+  assert.equal(cookieOf(await atGame('ticket?t=bad'), 'nf_game'), undefined);
+  // 從遊戲來登入：登完回應會告訴登入頁要帶通行證回去
+  const s2 = await start();
+  const nextCookie = cookieOf(await g('auth/start?next=liar-dice&r=5678'), 'nf_next').split(';')[0];
+  assert.equal(nextCookie, 'nf_next=liar-dice~5678');
+  const back = await (await gpost('login', { cookie: s2.cookie + '; ' + nextCookie, body: { id_token: await idToken(claims(s2)), state: s2.state } })).json();
+  assert.equal(back.next, '/api/game/pass?to=liar-dice&r=5678');
+  const s3 = await start();
+  assert.equal((await (await glogin(s3, await idToken(claims(s3)))).json()).next, ''); // 一般登入不跳
+  // 有回來就延長：剩不到 30 天時重新算 60 天；60 天都沒回來才要重新登入
+  const fresh = cookieOf(await glogin(s2, await idToken(claims(s2))), 'nf_game');
+  assert.ok(fresh);
+  const keep = fresh.split(';')[0];
+  clock += 20 * 864e5;
+  assert.equal(cookieOf(await g('me', { cookie: keep }), 'nf_game'), undefined); // 還有 40 天，不用延長
+  clock += 20 * 864e5;
+  assert.match(cookieOf(await g('me', { cookie: keep }), 'nf_game'), /Max-Age=5184000/); // 剩 20 天，延長
+  clock += 50 * 864e5; // 原本早就過期了，但延長過，還是登入中
+  assert.equal((await (await g('me', { cookie: keep })).json()).logged, true);
+  clock += 61 * 864e5;
+  assert.equal((await (await g('me', { cookie: keep })).json()).logged, false);
+}
+
 // 5. 登出：這個瀏覽器的登入失效
 assert.match(cookieOf(await gpost('logout', { cookie: who }), 'nf_game'), /Max-Age=0/);
 assert.equal((await (await g('me', { cookie: who })).json()).logged, false);
 assert.deepEqual([cleanName(''), cleanName('  A\u0000b  c  '), cleanName('一二三四五六七八九十一二三四')], ['玩家', 'Ab c', '一二三四五六七八九十一二']);
 globalThis.fetch = realFetch;
-console.log('PASS 私人下載、清單解析、手動編輯錯誤、線上更新清單、GitHub 發布、版本比較、來源故障、遊戲帳號（登入、禮包、救濟金）');
+console.log('PASS 私人下載、清單解析、手動編輯錯誤、線上更新清單、GitHub 發布、版本比較、來源故障、遊戲帳號（登入、禮包、救濟金、通行證、登入延長）');

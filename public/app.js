@@ -1,6 +1,6 @@
 import { parseTools, mergeTool, formatSize, fileUrl } from './tools-core.js?v=44e1fcfb';
 import { ALL, HEAVY } from './font-chars.js?v=462d23d6';
-import { initAccount, accountMode } from './account.js?v=badddb90';
+import { initAccount, accountMode, passUrl } from './account.js?v=a8c176f7';
 
 const $ = (id) => document.getElementById(id);
 const SVG = 'http://www.w3.org/2000/svg';
@@ -156,7 +156,7 @@ function fillPanel(t) {
   });
   const go = $('go');
   if (t.url) {
-    go.href = t.url;
+    go.href = passUrl(t) || t.url; // 遊戲：登入的人帶著登入進去
     go.replaceChildren(ballSvg('k-' + kind.key), el('span', '', kind.go));
     if (t.type === '網頁' || t.type === '遊戲') { go.target = '_blank'; go.rel = 'noopener'; } else { go.removeAttribute('target'); go.rel = 'noopener'; }
   } else {
@@ -260,6 +260,9 @@ function endDrag(e) {
 sheetPanel.addEventListener('touchend', endDrag);
 sheetPanel.addEventListener('touchcancel', endDrag);
 veil.addEventListener('touchmove', (e) => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+
+// 登入或登出後，換掉正在看的遊戲的「開始遊玩」連結
+document.addEventListener('nf-account', () => { if (mode === 'games' && selected >= 0) fillPanel(tools[selected]); });
 
 // 小人只在看得到的時候動
 if ('IntersectionObserver' in window) for (const art of [$('art'), $('art-games')]) if (art) new IntersectionObserver(([e]) => art.classList.toggle('still', e.intersectionRatio < 0.5), { threshold: [0, 0.5] }).observe(art);

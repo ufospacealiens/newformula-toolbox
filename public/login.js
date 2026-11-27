@@ -15,7 +15,7 @@ async function run() {
     const d = await r.json().catch(() => ({}));
     if (!r.ok) return show(r.status === 400 ? '登入等太久了，請回到遊戲區再按一次登入。' : '登入沒有成功，請回到遊戲區再試一次。');
     try { if (d.isNew) sessionStorage.setItem('nf-game-new', '1'); } catch { /* 無痕模式 */ }
-    location.replace('/#games');
+    location.replace(d.next || '/#games'); // 從遊戲來登入的，登完帶著登入回去
   } catch {
     show('連不上網站，請檢查網路後再試一次。');
   }

@@ -32,3 +32,10 @@ CREATE TABLE IF NOT EXISTS coin_log (
   at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS coin_log_player ON coin_log(player_id, at);
+
+-- 通行證：官網登入後點進遊戲，帶過去一次就作廢（1 分鐘內有效）
+CREATE TABLE IF NOT EXISTS tickets (
+  token_hash TEXT PRIMARY KEY,
+  player_id TEXT NOT NULL,
+  expires_at INTEGER NOT NULL
+);

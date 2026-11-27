@@ -4,7 +4,9 @@ const $ = (id) => document.getElementById(id);
 const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
 const fmt = (n) => Math.max(0, Math.round(n)).toLocaleString('en-US');
 const NEW_FLAG = 'nf-game-new', SOUND_FLAG = 'nf-game-sound';
-let me = null, inGames = false, busy = false, reliefTried = false, welcomePending = false, lastCheck = 0;
+let me = null, inGames = false, busy = false, reliefTried = false, welcomePending = false, lastCheck = 0, flowRunning = false, lastLogged = null;
+// 官網登入後，點這些遊戲會帶著登入進去（伺服器 lib/game-server.js 的 GAMES 也要有）
+const PASS_GAMES = new Set(['liar-dice']);
 
 // ---------- 音效：全部用程式即時合成，沒有音檔 ----------
 const snd = { ctx: null, out: null, noise: null, on: true };
@@ -105,6 +107,8 @@ function setWallet(n) {
 }
 function render() {
   const ready = Boolean(me?.ready);
+  const logged = Boolean(ready && me.logged);
+  if (logged !== lastLogged) { lastLogged = logged; document.dispatchEvent(new Event('nf-account')); }
   $('player').hidden = !ready; // 還沒設定好登入，就整條不顯示
   if (!ready) return;
   $('p-login').hidden = me.logged;
@@ -236,13 +240,16 @@ function showStage(o) {
     stage.showModal();
     const finish = (label) => {
       sBtn.hidden = false; sBtn.textContent = label; sBtn.focus({ preventScroll: true });
-      stageAction = () => { stageAction = null; stage.close(); $('prize').replaceChildren(); busy = false; done(); };
+      const close = () => { stageAction = null; stage.close(); $('prize').replaceChildren(); busy = false; done(); };
+      stageAction = close;
+      if (o.auto) setTimeout(() => { if (stageAction === close) close(); }, calm.matches ? 1200 : 3200); // 自動領的，看完自己關
     };
     const ready = () => {
       if (o.landTitle) { sTitle.textContent = o.landTitle; sSub.textContent = o.landSub || ''; }
       sBtn.hidden = false; sBtn.textContent = o.openLabel; sBtn.dataset.role = 'open';
       sBtn.focus({ preventScroll: true });
       stageAction = open;
+      if (o.auto) setTimeout(() => { if (stageAction === open) open(); }, calm.matches ? 200 : 900); // 不用按，自己打開
     };
     if (o.kind === 'relief') land().then(ready); else ready();
 
@@ -298,12 +305,51 @@ function stampCell(i) {
 async function welcome() {
   welcomePending = false;
   await showStage({
-    kind: 'welcome', title: '歡迎來到新配方遊戲區', sub: '新玩家見面禮', openLabel: '打開見面禮', from: 0,
+    auto: true, kind: 'welcome', title: '歡迎來到新配方遊戲區', sub: '新玩家見面禮', openLabel: '打開見面禮', from: 0,
     doneSub: '這是你的起始金幣，之後每個遊戲都用它',
     claim: async () => ({ amount: me.coins, to: me.coins }),
   });
   render();
-  if (!me.gift.claimed) toast('今天的每日禮包也可以領了');
+}
+
+// 每日禮包：登入的人進到遊戲區就自動領，不用按（使用者 2026-11-26 決定）
+async function autoGift() {
+  if (busy || !me?.logged || me.gift.claimed) return;
+  const pos = me.gift.pos, from = me.coins;
+  const { status, data } = await api('gift', true);
+  if (status !== 200) {
+    if (data.name) me = { ...me, ...data };
+    render();
+    return;
+  }
+  me = { ...me, ...data };
+  const amounts = me.gift.amounts;
+  await showStage({
+    auto: true, kind: pos === 6 ? 'gold' : 'gift', from, openLabel: '打開禮包',
+    title: pos === 6 ? '第 7 天大禮包！' : `第 ${pos + 1} 天禮包`,
+    sub: pos === 6 ? '7 天全部領完了' : '今天的禮包自動幫你領了',
+    doneSub: pos === 6 ? '明天開始新的一輪' : `明天回來可以領第 ${pos + 2} 天：${fmt(amounts[pos + 1])} 金幣`,
+    claim: async () => ({ amount: data.amount, to: data.coins }),
+  });
+  render();
+}
+
+// 進到遊戲區：見面禮 → 每日禮包 → 救濟金，一個接一個
+async function enterFlow() {
+  if (flowRunning || busy || !inGames || !me?.logged) return;
+  flowRunning = true;
+  try {
+    if (welcomePending) await welcome();
+    if (inGames && !me.gift.claimed) await autoGift();
+    if (inGames) maybeRelief();
+  } finally {
+    flowRunning = false;
+  }
+}
+
+// 「開始遊玩」的連結：登入的人經過官網發通行證，進遊戲就是登入狀態
+export function passUrl(game) {
+  return me?.logged && PASS_GAMES.has(game.id) ? '/api/game/pass?to=' + encodeURIComponent(game.id) : '';
 }
 
 function maybeRelief() {
@@ -392,16 +438,14 @@ function wire() {
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible' || !me?.logged || busy || Date.now() - lastCheck < 5000) return;
     lastCheck = Date.now();
-    refresh().then(() => { if (inGames) maybeRelief(); });
+    refresh().then(() => { if (inGames) enterFlow(); });
   });
 }
 
 // 切到遊戲區時呼叫
 export function accountMode(on) {
   inGames = on;
-  if (!on || !me?.logged || busy) return;
-  if (welcomePending) welcome();
-  else maybeRelief();
+  if (on) enterFlow();
 }
 
 export async function initAccount() {
